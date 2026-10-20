@@ -1172,12 +1172,18 @@ p {
   min-height: 100vh;
   min-height: 100svh;
   padding-bottom: 0;
+  /* The email sizes itself to this column. */
+  container-type: inline-size;
 }
 
 .email {
   display: inline-block;
   font-family: var(--display);
   font-size: clamp(26px, 2.5vw, 40px);
+  /* On one line wherever it fits: the address is about 14.7 times as wide
+     as its font size in Alata, so a phone or a narrow window shrinks it
+     to the column instead of breaking it. */
+  font-size: min(clamp(26px, 2.5vw, 40px), 100cqi / 15);
   line-height: 1.2;
   color: var(--primary);
   text-decoration: none;
