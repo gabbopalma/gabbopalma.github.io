@@ -1,0 +1,34 @@
+import 'package:jaspr/dom.dart';
+import 'package:jaspr/jaspr.dart';
+
+import '../../content/copy.dart';
+import '../../content/lang.dart';
+import '../../content/scene.dart';
+import 'shared.dart';
+
+class ContactSection extends StatelessComponent {
+  const ContactSection({required this.lang, super.key});
+
+  final Lang lang;
+
+  @override
+  Component build(BuildContext context) {
+    return sectionFrame(Section.contact, 'contact', [
+      kicker(ContactCopy.kicker, lang),
+      h2([.text(ContactCopy.title[lang])]),
+      p(classes: 'lead', [.text(ContactCopy.lead[lang])]),
+      a(href: 'mailto:${Links.email}', classes: 'email', [.text(Links.email)]),
+      dl(classes: 'rows channels', [
+        for (final (name, handle, href) in ContactCopy.channels)
+          div(classes: 'row', [
+            dt([.text(name)]),
+            dd([outLink(href, [.text(handle)])]),
+          ]),
+      ]),
+      footer(classes: 'colophon', [
+        p([.text(ContactCopy.footer[lang])]),
+        p([.text('© ${DateTime.now().year} Gabriel Palmisano')]),
+      ]),
+    ]);
+  }
+}
