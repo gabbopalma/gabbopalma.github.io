@@ -4,12 +4,21 @@ import 'package:jaspr/jaspr.dart';
 import '../../content/copy.dart';
 import '../../content/lang.dart';
 import '../../content/scene.dart';
+import '../icons.dart';
 import 'shared.dart';
 
 class ContactSection extends StatelessComponent {
   const ContactSection({required this.lang, super.key});
 
   final Lang lang;
+
+  static const _icons = {
+    'GitHub': BrandIcon.github,
+    'LinkedIn': BrandIcon.linkedin,
+    'Sessionize': BrandIcon.sessionize,
+    'X': BrandIcon.x,
+    'Instagram': BrandIcon.instagram,
+  };
 
   @override
   Component build(BuildContext context) {
@@ -21,7 +30,7 @@ class ContactSection extends StatelessComponent {
       dl(classes: 'rows channels', [
         for (final (name, handle, href) in ContactCopy.channels)
           div(classes: 'row', [
-            dt([.text(name)]),
+            dt([?_icons[name]?.call(size: 14), .text(name)]),
             dd([outLink(href, [.text(handle)])]),
           ]),
       ]),

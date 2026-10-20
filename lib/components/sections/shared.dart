@@ -25,11 +25,15 @@ List<Component> marked(Txt before, Txt mark, Txt after, Lang lang) => [
 ];
 
 /// An outbound link that opens in a new tab and does not hand the opener
-/// to the page it opens.
-Component outLink(String href, List<Component> children, {String? classes}) => a(
+/// to the page it opens. [label] names a link that shows only an icon, for
+/// screen readers and as the tooltip.
+Component outLink(String href, List<Component> children, {String? classes, String? label}) => a(
   href: href,
   target: .blank,
   classes: classes,
-  attributes: {'rel': 'noopener'},
+  attributes: {
+    'rel': 'noopener',
+    if (label != null) ...{'aria-label': label, 'title': label},
+  },
   children,
 );

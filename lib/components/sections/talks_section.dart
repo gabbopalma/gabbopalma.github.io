@@ -1,5 +1,6 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
+import 'package:universal_web/web.dart' as web;
 
 import '../../content/copy.dart';
 import '../../content/lang.dart';
@@ -39,9 +40,10 @@ class TalksSection extends StatelessComponent {
       kicker(TalksCopy.kicker, lang),
       h2([.text(TalksCopy.title[lang])]),
       p(classes: 'stats', [
-        _stat(stats.talksGiven, TalksCopy.talksGiven),
-        _stat(stats.people, TalksCopy.people),
-        _stat(stats.cities, TalksCopy.cities),
+        _stat(formatNumber(stats.talksGiven, lang), TalksCopy.talksGiven),
+        // Counted heads are approximate by nature: rounded, like the ~3 years.
+        _stat(approxPeople(stats.people, lang), TalksCopy.people),
+        _stat(formatNumber(stats.cities, lang), TalksCopy.cities),
       ]),
       p(classes: 'hint', [.text(TalksCopy.hint[lang])]),
       div(
@@ -56,8 +58,8 @@ class TalksSection extends StatelessComponent {
     ]);
   }
 
-  Component _stat(int value, Txt label) => span(classes: 'stat', [
-    span(classes: 'value', [.text(formatNumber(value, lang))]),
+  Component _stat(String value, Txt label) => span(classes: 'stat', [
+    span(classes: 'value', [.text(value)]),
     .text(' ${label[lang]}'),
   ]);
 
@@ -74,15 +76,38 @@ class TalksSection extends StatelessComponent {
     ]);
   }
 
+  /// A mouse, where pointing is free; on a phone pointing means tapping.
+  static bool get _canHover => kIsWeb && web.window.matchMedia('(hover: hover)').matches;
+
   Component _stop(Stop stop) {
     final upcoming = !stop.isPastAt(now);
-    final isFocused = identical(stop, focused) || pointedCities.contains(stop.place.name);
-    void focus(Object? _) => onFocus(stop);
+    final selected = identical(stop, focused);
+    final isFocused = selected || pointedCities.contains(stop.place.name);
+
+    // A touch fires mouseenter, then focus, then click, all for one tap, so
+    // each event only selects for the input it belongs to: hover for a
+    // mouse, focus for the keyboard, click for a finger. The click is also
+    // the way out on a phone: tapping the selected stop again lets it go.
+    void hover(web.Event _) {
+      if (_canHover) onFocus(stop);
+    }
+
+    void keyboard(web.Event event) {
+      if ((event.target as web.Element).matches(':focus-visible')) onFocus(stop);
+    }
+
+    void tap(web.Event event) {
+      onFocus(_canHover || !selected ? stop : null);
+      // A click is not a keyboard visit: let the row go, or after any key
+      // press Chrome draws the keyboard focus ring on it and it stays there
+      // after the selection has moved on.
+      (event.currentTarget as web.HTMLElement?)?.blur();
+    }
 
     return li(
       classes: ['stop', if (upcoming) 'upcoming', if (isFocused) 'focused'].join(' '),
-      attributes: {'tabindex': '0'},
-      events: {'mouseenter': focus, 'focus': focus, 'click': focus},
+      attributes: {'tabindex': '0', 'aria-pressed': '$selected'},
+      events: {'mouseenter': hover, 'focus': keyboard, 'click': tap},
       [
         span(classes: 'date', [.text(formatDate(stop.date, lang))]),
         span(classes: 'event', [.text(stop.event[lang])]),

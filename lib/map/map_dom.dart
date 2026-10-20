@@ -1,3 +1,5 @@
+import 'dart:js_interop';
+
 import 'package:web/web.dart' as web;
 
 /// The few places where the map needs the browser rather than Flutter.
@@ -23,6 +25,16 @@ void releaseMapCanvasFocus() {
   for (var i = 0; i < canvases.length; i++) {
     (canvases.item(i) as web.Element?)?.removeAttribute('tabindex');
   }
+}
+
+/// Whether the page is in its phone layout, the map a band across the top.
+/// The same breakpoint as `@media (max-width: 900px)` in the stylesheet.
+bool isBandLayout() => web.window.innerWidth <= 900;
+
+/// Sets the pointer over the map: a hand where the globe can be grabbed, a
+/// closed hand while it is, the plain arrow everywhere else.
+void setCanvasCursor(JSObject container, String cursor) {
+  (container as web.HTMLElement).style.cursor = cursor;
 }
 
 /// Hides the map until its first composition is in place, then fades it in.

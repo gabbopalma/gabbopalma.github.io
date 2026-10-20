@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:js_interop';
 import 'dart:math' as math;
 
 import 'package:flutter/scheduler.dart';
@@ -21,13 +22,16 @@ import 'site_map_style.dart';
 /// position plus padding, so a transition is one continuous camera move that
 /// can be eased and chained, instead of a resizing canvas racing a flight.
 class SiteMap extends StatefulWidget {
-  const SiteMap({required this.scene, required this.onPoint, super.key});
+  const SiteMap({required this.scene, required this.onPoint, required this.onSpin, super.key});
 
   final MapScene scene;
 
   /// The dot under the pointer, or null when the pointer leaves it. The page
   /// labels it and lights the rows that talk about the same place.
   final void Function(PointedPlace? place) onPoint;
+
+  /// The reader has grabbed the open source globe: the page drops its hint.
+  final void Function() onSpin;
 
   @override
   State<SiteMap> createState() => _SiteMapState();
@@ -89,6 +93,9 @@ class _SiteMapState extends State<SiteMap> with SingleTickerProviderStateMixin {
   /// Feature ids of the dots under the pointer, see [placeKey].
   final List<String> _under = [];
 
+  /// The beat between letting go of the globe and its trip home.
+  Timer? _handBack;
+
   static bool _isGlobe(Section section) =>
       section == Section.hero || section == Section.openSource;
 
@@ -118,6 +125,7 @@ class _SiteMapState extends State<SiteMap> with SingleTickerProviderStateMixin {
   @override
   void dispose() {
     _settleTimer?.cancel();
+    _handBack?.cancel();
     _cancelLegs();
     _stopDrift();
     super.dispose();
@@ -127,9 +135,14 @@ class _SiteMapState extends State<SiteMap> with SingleTickerProviderStateMixin {
   // Shots: where the camera is for each scene.
   // ---------------------------------------------------------------------
 
-  /// A wide pane is the phone's band across the top; a tall one is the
-  /// desktop's right half, whose left edge fades into the page.
-  bool get _wide => _size.width > _size.height;
+  /// The phone's band across the top, rather than the desktop's right half
+  /// whose left edge fades into the page.
+  ///
+  /// Decided by the same 900 px breakpoint as the stylesheet, not by the
+  /// pane's shape: on an ultrawide monitor the desktop half is wider than it
+  /// is tall, and reading that as a phone dropped the fade padding and moved
+  /// every globe.
+  bool get _wide => isBandLayout();
 
   /// How far right of the canvas centre the flat maps sit, so nothing
   /// important lands under the fade on the desktop.
@@ -137,10 +150,20 @@ class _SiteMapState extends State<SiteMap> with SingleTickerProviderStateMixin {
 
   /// The hero globe: larger than the pane and pushed right, half out of the
   /// frame, as on the title slide in Berlin.
+  ///
+  /// On the desktop it is sized on the height and placed so that about 38%
+  /// of it runs past the right edge, whatever the pane's proportions: on a
+  /// tall pane and on an ultrawide one the composition is the same.
   ({double diameter, double padLeft}) get _heroFrame {
-    final side = math.max(_size.height * 1.12, _size.width * 0.95);
-    final left = _size.width * (_wide ? 0.3 : 0.16);
-    final centreX = left + side / 2;
+    final double side;
+    final double centreX;
+    if (_wide) {
+      side = math.max(_size.height * 1.12, _size.width * 0.95);
+      centreX = _size.width * 0.3 + side / 2;
+    } else {
+      side = _size.height * 1.12;
+      centreX = math.max(_size.width / 2, _size.width - side * 0.12);
+    }
     // Padding moves the centre of the view to the middle of what is left,
     // so pushing the centre right by d takes 2d of left padding.
     return (diameter: side, padLeft: math.max(0, 2 * centreX - _size.width));
@@ -246,6 +269,8 @@ class _SiteMapState extends State<SiteMap> with SingleTickerProviderStateMixin {
     // A label left over from the last scene would point at a dot that is
     // about to fade out or fly away.
     if (previous?.section != scene.section && _under.isNotEmpty) _clearHover();
+    _handBack?.cancel();
+    _setGrabbable(scene.section == Section.openSource);
     final generation = ++_generation;
     // Starts from wherever the camera is now, including half way through an
     // earlier move, so an interruption never snaps.
@@ -484,6 +509,17 @@ class _SiteMapState extends State<SiteMap> with SingleTickerProviderStateMixin {
       filter: ['==', ['get', 'group'], ''],
     );
     controller.onFeatureHover.add(_onHover);
+    if (_gl case final gl?) {
+      // The press, not the drag, takes the globe: the turn moves the camera
+      // with jumpTo every frame, and in GL JS a jump stops any gesture in
+      // progress, so a turn still running when the drag begins kills it.
+      gl.on('mousedown', ((JSAny? _) => _onPress()).toJS);
+      gl.on('dragstart', ((JSAny? _) => widget.onSpin()).toJS);
+      // Either can come last: a click with no drag ends on mouseup, a drag
+      // released outside the map ends on dragend.
+      gl.on('mouseup', ((JSAny? _) => _onLetGo()).toJS);
+      gl.on('dragend', ((JSAny? _) => _onLetGo()).toJS);
+    }
 
     _ready = true;
     releaseMapCanvasFocus();
@@ -492,6 +528,7 @@ class _SiteMapState extends State<SiteMap> with SingleTickerProviderStateMixin {
     if (_gl case final gl? when scene.section == Section.hero) {
       // The entrance: the globe starts turned away and swings round to Bari.
       _shown = scene;
+      _setGrabbable(false);
       gl.jumpTo(_heroShot(lngOffset: -80).options());
       _dress(scene);
       showMapCanvas(visible: true);
@@ -501,6 +538,59 @@ class _SiteMapState extends State<SiteMap> with SingleTickerProviderStateMixin {
       _show(scene, animate: false);
       showMapCanvas(visible: true);
     }
+  }
+
+  // ---------------------------------------------------------------------
+  // Spinning the open source globe by hand, as on the Berlin title slide.
+  // ---------------------------------------------------------------------
+
+  /// How long after letting go the globe starts home: only a beat, so a
+  /// second grab right away does not have to race it, and pressing again
+  /// cancels the trip anyway.
+  static const _handBackDelay = Duration(milliseconds: 400);
+  static const _homeFlight = Duration(milliseconds: 1200);
+
+  void _setGrabbable(bool on) {
+    final gl = _gl;
+    if (gl == null) return;
+    on ? gl.dragPan.enable() : gl.dragPan.disable();
+    // Explicit 'default' rather than empty: MapLibre's stylesheet gives an
+    // interactive map a grab cursor, and only this globe can be grabbed.
+    setCanvasCursor(gl.getCanvasContainer(), on ? 'grab' : 'default');
+  }
+
+  /// A hand is on the globe: it is theirs from this instant. The turn stops
+  /// and anything still in the air is dropped. Outside the open source scene
+  /// a press is just a press.
+  void _onPress() {
+    if (_shown?.section != Section.openSource) return;
+    _handBack?.cancel();
+    _stopDrift();
+    _cancelLegs();
+    _generation++;
+    if (_gl case final gl?) setCanvasCursor(gl.getCanvasContainer(), 'grabbing');
+  }
+
+  /// Let go: a beat later the globe flies back to its frame and turns again.
+  ///
+  /// It keeps the longitude the drag left it at and restores only what the
+  /// composition depends on, the latitude, the zoom and the padding. Flying
+  /// back to where it was taken from would be a visible jump backwards,
+  /// then a turn through the same ground again.
+  void _onLetGo() {
+    final gl = _gl;
+    if (gl == null || _shown?.section != Section.openSource) return;
+    setCanvasCursor(gl.getCanvasContainer(), 'grab');
+    _handBack?.cancel();
+    final generation = _generation;
+    _handBack = Timer(_handBackDelay, () {
+      if (!mounted || generation != _generation || _shown?.section != Section.openSource) return;
+      _driftLng = gl.getCenter().lng;
+      gl.easeTo(_shotFor(_shown!).options(duration: _homeFlight, easing: Ease.inOutCubic));
+      _legs.add(Timer(_homeFlight + const Duration(milliseconds: 100), () {
+        if (mounted && generation == _generation) _startDrift();
+      }));
+    });
   }
 
   // ---------------------------------------------------------------------

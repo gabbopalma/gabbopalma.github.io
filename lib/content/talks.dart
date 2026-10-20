@@ -62,8 +62,8 @@ final talks = <Talk>[
     summary: Txt(
       'How one Dart API keeps the same map behavior on Android, iOS and the '
           'web, when every platform runs a different engine.',
-      'Come una sola API Dart mantiene lo stesso comportamento della mappa su '
-          'Android, iOS e web, quando ogni piattaforma ha un motore diverso.',
+      'Come far comportare la mappa allo stesso modo su Android, iOS e web con '
+          'una sola API Dart, anche se ogni piattaforma ha un engine diverso.',
     ),
     stops: [
       Stop(
@@ -81,8 +81,8 @@ final talks = <Talk>[
     summary: Txt(
       'AI agents that drive a running Flutter app through the Dart VM '
           'Service, and where they fit next to a deterministic CI.',
-      'Agenti AI che pilotano un\'app Flutter in esecuzione tramite il Dart '
-          'VM Service, e dove si mettono accanto a una CI deterministica.',
+      "AI agent che usano un'app Flutter al posto tuo tramite il Dart VM "
+          'Service, e come affiancarli a una CI deterministica.',
     ),
     stops: [
       Stop(
@@ -128,7 +128,8 @@ final talks = <Talk>[
     language: 'IT',
     summary: Txt(
       'A panel on how we really use AI at work, put together on the day.',
-      "Un panel su come usiamo davvero l'IA al lavoro, nato il giorno stesso.",
+      "Un panel su come usiamo davvero l'AI nel lavoro di tutti i giorni, "
+          'organizzato sul momento.',
     ),
     stops: [
       Stop(
@@ -164,8 +165,8 @@ final talks = <Talk>[
       'Talks on AI for students and businesses in the province of Pesaro and '
           'Urbino, closing at the University of Urbino with Confindustria '
           'Pesaro-Urbino.',
-      "Interventi sull'IA per studenti e imprese nella provincia di Pesaro e "
-          "Urbino, chiusi all'Università di Urbino con Confindustria "
+      "Incontri sull'AI con studenti e imprese in provincia di Pesaro e "
+          "Urbino, conclusi all'Università di Urbino insieme a Confindustria "
           'Pesaro-Urbino.',
     ),
     stops: [
@@ -259,6 +260,13 @@ String formatDate(DateTime date, Lang lang) {
   const it = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
   final month = (lang == Lang.en ? en : it)[date.month - 1];
   return '${date.day} $month ${date.year}';
+}
+
+/// People in the room, to the nearest fifty with a tilde: "~800" for 796.
+/// Below a hundred the count is small enough to say as it is.
+String approxPeople(int value, Lang lang) {
+  if (value < 100) return formatNumber(value, lang);
+  return '~${formatNumber((value / 50).round() * 50, lang)}';
 }
 
 String formatNumber(int value, Lang lang) {

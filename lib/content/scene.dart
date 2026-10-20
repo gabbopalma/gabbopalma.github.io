@@ -6,7 +6,7 @@ enum Section {
   about('about'),
   openSource('open-source'),
   talks('talks'),
-  work('work'),
+  work('experience'),
   contact('contact');
 
   const Section(this.anchor);

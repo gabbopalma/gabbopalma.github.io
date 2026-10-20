@@ -23,10 +23,10 @@ class AboutSection extends StatelessComponent {
       kicker(AboutCopy.kicker, lang),
       div(classes: 'about-head', [
         img(
-          src: 'images/gabriel.jpg',
+          src: 'images/gabriel-stage.jpg',
           alt: 'Gabriel Palmisano',
-          width: 88,
-          height: 88,
+          width: 120,
+          height: 120,
           classes: 'portrait',
         ),
         h2([.text(AboutCopy.title[lang])]),
@@ -40,7 +40,12 @@ class AboutSection extends StatelessComponent {
           span(classes: 'name', [.text(Places.bari.name)]),
           span(classes: 'what', [.text(AboutCopy.bari[lang])]),
         ]),
-        li(classes: 'leg', [.text('$km ${AboutCopy.north[lang]}')]),
+        // The way between the two stops, secondary to them: an arrow down
+        // the rail and the distance, smaller and lighter than a stop.
+        li(classes: 'leg', [
+          span(classes: 'arrow', attributes: {'aria-hidden': 'true'}, [.text('↓')]),
+          .text('$km km ${AboutCopy.toPesaro[lang]}'),
+        ]),
         li(classes: _stopClasses(Places.pesaro), [
           span(classes: 'name', [.text(Places.pesaro.name)]),
           span(classes: 'what', [.text(AboutCopy.pesaro[lang])]),
@@ -48,11 +53,22 @@ class AboutSection extends StatelessComponent {
       ]),
 
       h3([.text(AboutCopy.stackTitle[lang])]),
+      // What fills the day, larger than the rest: the emphasis is in the
+      // type size, not in a box around it.
+      div(classes: 'daily', [
+        span(classes: 'daily-label', [.text(AboutCopy.dailyLabel[lang])]),
+        p(classes: 'daily-items', [
+          for (final (i, item) in AboutCopy.daily.indexed) ...[
+            if (i > 0) span(classes: 'sep', [.text('·')]),
+            span([.text(item[lang])]),
+          ],
+        ]),
+      ]),
       dl(classes: 'rows stack', [
         for (final (label, items) in AboutCopy.stack)
           div(classes: 'row', [
             dt([.text(label[lang])]),
-            dd([.text(items)]),
+            dd([.text(items[lang])]),
           ]),
       ]),
     ]);

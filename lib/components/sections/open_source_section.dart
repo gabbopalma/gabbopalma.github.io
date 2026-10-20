@@ -37,22 +37,30 @@ class OpenSourceSection extends StatelessComponent {
       ]),
       p(classes: 'source', [.text(OpenSourceCopy.source[lang])]),
       ul(classes: 'facts', [
-        for (final (i, fact) in OpenSourceCopy.facts.indexed)
-          li([
-            .text(fact[lang]),
-            // The Early Access Program is the one claim a reader may want to
-            // check, so it carries its source.
-            if (i == 1) ...[
-              .text(' '),
-              outLink(Links.interopBlog, [.text(OpenSourceCopy.interopLink[lang])]),
-            ],
-          ]),
+        for (final fact in OpenSourceCopy.facts) _fact(fact),
       ]),
       p(classes: 'links', [
         outLink(Links.pubDev, [.text(OpenSourceCopy.linkPubDev[lang])], classes: 'button primary'),
         outLink(Links.repo, [.text(OpenSourceCopy.linkRepo[lang])], classes: 'button'),
         outLink(Links.docs, [.text(OpenSourceCopy.linkDocs[lang])], classes: 'button'),
       ]),
+    ]);
+  }
+
+  /// The fact, its lead word in front, and its numbers and source on a line
+  /// of their own when it has numbers; otherwise the source follows the text.
+  Component _fact(Fact fact) {
+    final source = switch (fact.source) {
+      (final label, final href) => <Component>[.text(' '), outLink(href, [.text(label[lang])])],
+      null => <Component>[],
+    };
+    return li([
+      if (fact.lead case final lead?) span(classes: 'lead-in', [.text('${lead[lang]}: ')]),
+      .text(fact.text[lang]),
+      if (fact.detail case final detail?)
+        span(classes: 'detail', [.text(detail[lang]), ...source])
+      else
+        ...source,
     ]);
   }
 }

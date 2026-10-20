@@ -165,10 +165,34 @@ p {
   max-width: var(--measure);
 }
 
+/* One word under the highlighter, as in the Berlin deck: a straight flat
+   band behind the letters, from the baseline to the top of the lowercase,
+   never below the baseline. No slant and no animation: the rest of the page
+   is geometric, and the band is emphasis, not an effect. */
 .mark {
-  background: linear-gradient(180deg, transparent 58%, var(--marker) 58%, var(--marker) 94%, transparent 94%);
-  padding: 0 0.06em;
-  margin: 0 -0.06em;
+  position: relative;
+  z-index: 0;
+  white-space: nowrap;
+}
+
+.mark::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: -0.08em;
+  right: -0.08em;
+  /* Measured in the browser on Alata, the titles' face: the baseline sits
+     0.27em above the bottom of the box and the lowercase is 0.46em tall. */
+  bottom: var(--mark-bottom, 0.25em);
+  height: var(--mark-height, 0.49em);
+  border-radius: 0.08em;
+  background: var(--marker);
+}
+
+/* Inter Tight, in the hero line: baseline at 0.24em, lowercase 0.55em. */
+.lead .mark {
+  --mark-bottom: 0.21em;
+  --mark-height: 0.58em;
 }
 
 .kicker {
@@ -383,6 +407,105 @@ p {
   inset: 0;
 }
 
+/* "Drag to spin the globe", said by a cursor with a name tag, like the
+   cursors that show where Claude is pointing. Anchored on the open source
+   globe with the map's own numbers: the globe's centre sits at 57% of the
+   pane (the fade takes 14% on the left) and halfway down, and it is 0.8 of
+   the smaller of the space left and the height across. The cursor rests on
+   its lower right, glides in, presses, drags a little, lets go, and loops.
+   Only where there is a mouse to drag with. */
+.map-cursor {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 901px) {
+  .map-cursor {
+    --globe: calc(0.8 * min(43vw, 100vh));
+    position: absolute;
+    z-index: 3;
+    left: calc(57% + var(--globe) * 0.2);
+    top: calc(50% + var(--globe) * 0.16);
+    display: block;
+  }
+
+  .cursor-arrow {
+    display: block;
+    fill: var(--primary);
+    stroke: #fff;
+    stroke-width: 1.4px;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 2px 4px rgba(17, 23, 37, 0.25));
+    transform-origin: 1px 1px;
+  }
+
+  .cursor-label {
+    position: absolute;
+    left: 16px;
+    top: 20px;
+    padding: 5px 10px;
+    border-radius: 4px 999px 999px 999px;
+    background: var(--primary);
+    color: #fff;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(40, 93, 170, 0.3);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .map-cursor {
+      animation: cursor-move 5.2s cubic-bezier(0.45, 0, 0.25, 1) 0.6s infinite both;
+    }
+
+    .cursor-arrow {
+      animation: cursor-press 5.2s ease 0.6s infinite both;
+    }
+  }
+}
+
+/* Glide in from the lower right, rest, drag a little to the left as if
+   spinning the globe, rest again, fade out. */
+@keyframes cursor-move {
+  0% {
+    opacity: 0;
+    transform: translate(46px, 34px);
+  }
+  14% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  34% {
+    transform: translate(0, 0);
+  }
+  58% {
+    transform: translate(-56px, -6px);
+  }
+  84% {
+    opacity: 1;
+    transform: translate(-56px, -6px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-56px, -6px);
+  }
+}
+
+/* The press, while dragging: the arrow tips a little, like a finger down. */
+@keyframes cursor-press {
+  0%,
+  30%,
+  62%,
+  100% {
+    transform: scale(1);
+  }
+  35%,
+  57% {
+    transform: scale(0.86);
+  }
+}
+
 /* What a dot is, next to the pointer. */
 .map-tip {
   position: absolute;
@@ -459,6 +582,40 @@ p {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* With a selected talk stop the caption carries a cross to let it go: the
+   one thing in the map pane that takes a click on every device. */
+.map-caption.with-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.map-pane .map-caption .caption-clear {
+  pointer-events: auto !important;
+}
+
+.caption-clear {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  font: 500 17px/1 var(--sans);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.caption-clear:hover {
+  background: var(--accent);
 }
 
 /* Until Flutter draws, the globe's outline sits where the live one will. */
@@ -540,7 +697,50 @@ p {
 .links {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
+}
+
+/* Brand marks in the site's ink, never in the brands' own colours. */
+.icon {
+  display: block;
+  flex: none;
+}
+
+/* GitHub, LinkedIn and Sessionize next to the hero buttons, after a hairline. */
+.quick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding-left: 14px;
+  border-left: 1px solid var(--hairline-strong);
+}
+
+.icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--text-2);
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.icon-link:hover {
+  color: var(--primary);
+  background: var(--surface);
+}
+
+.channels dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.channels dt .icon {
+  color: var(--text-2);
 }
 
 /* ------------------------------------------------------------------ */
@@ -558,12 +758,13 @@ p {
   margin: 0;
 }
 
+/* The whole photo, not cropped into a circle: a stage shot, square, with
+   rounded corners. */
 .portrait {
   flex: none;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 120px;
+  height: 120px;
+  border-radius: 14px;
   box-shadow: 0 0 0 1px var(--hairline);
 }
 
@@ -625,11 +826,56 @@ p {
   color: var(--muted);
 }
 
-.rail .leg {
+/* Every day: the three tools that fill the day, above the rows. */
+.daily {
+  max-width: var(--measure);
+  margin: 0 0 1.4em;
+}
+
+.daily-label {
+  display: block;
   font-family: var(--mono);
-  font-size: 13px;
-  color: var(--muted);
-  padding: 1em 0;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 0.3em;
+}
+
+.daily-items {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(20px, 1.7vw, 26px);
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+/* A tool's name never breaks across lines; the list wraps between tools. */
+.daily-items span {
+  white-space: nowrap;
+}
+
+.daily-items .sep {
+  color: var(--accent);
+  margin: 0 0.35em;
+}
+
+/* The way between two stops: smaller and lighter than a stop's own line,
+   with an arrow down the rail, so it reads as "from here to there". */
+.rail .leg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: rgba(17, 23, 37, 0.45);
+  padding: 0.9em 0;
+}
+
+.rail .leg .arrow {
+  color: var(--primary);
+  font-size: 12px;
 }
 
 /* ------------------------------------------------------------------ */
@@ -696,6 +942,17 @@ p {
 
 .facts li:last-child {
   border-bottom: 1px solid var(--hairline);
+}
+
+.facts .lead-in {
+  font-weight: 600;
+}
+
+/* The numbers behind a fact, on their own line, a step quieter. */
+.facts .detail {
+  display: block;
+  margin-top: 0.3em;
+  color: var(--text-2);
 }
 
 /* ------------------------------------------------------------------ */
@@ -1007,6 +1264,12 @@ p {
     white-space: normal;
   }
 
+  /* A finger-sized cross on the phone. */
+  .caption-clear {
+    width: 32px;
+    height: 32px;
+  }
+
   .map-loader-globe {
     width: calc(var(--band) * 1.12);
     height: calc(var(--band) * 1.12);
@@ -1085,6 +1348,22 @@ p {
 
   .figure .label {
     margin: 0;
+  }
+
+  /* The icons wrap under the buttons: a row of their own, aligned with the
+     text, with no separator, and as round buttons a finger can hit. */
+  .quick {
+    flex-basis: 100%;
+    gap: 10px;
+    margin: 4px 0 0;
+    padding: 0;
+    border-left: none;
+  }
+
+  .icon-link {
+    width: 44px;
+    height: 44px;
+    box-shadow: inset 0 0 0 1px var(--hairline-strong);
   }
 
   .stops .stop {

@@ -19,6 +19,19 @@ extension type GlMap._(JSObject _) implements JSObject {
   external void stop();
   external double getZoom();
   external GlLngLat getCenter();
+
+  /// The drag handler, switched on only where the globe is the reader's to
+  /// spin. Toggled here rather than through the widget, so it changes with
+  /// the scene and never rebuilds the map.
+  external GlHandler get dragPan;
+
+  external JSObject getCanvasContainer();
+  external void on(String type, JSFunction listener);
+}
+
+extension type GlHandler._(JSObject _) implements JSObject {
+  external void enable();
+  external void disable();
 }
 
 extension type GlLngLat._(JSObject _) implements JSObject {

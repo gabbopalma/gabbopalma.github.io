@@ -28,27 +28,62 @@ class MapPane extends StatelessComponent {
     required this.scene,
     required this.caption,
     required this.onPoint,
+    required this.onSpin,
     this.tip,
+    this.hint,
+    this.clear,
     super.key,
   });
+
+  /// When a talk stop is selected: the label and the action of the cross in
+  /// the caption that lets it go.
+  final (String, void Function())? clear;
 
   final MapScene scene;
   final String caption;
   final void Function(PointedPlace? place) onPoint;
+  final void Function() onSpin;
   final MapTip? tip;
+
+  /// "Drag to spin the globe", under the open source globe until the first
+  /// drag. The stylesheet shows it only where there is a mouse to drag with.
+  final String? hint;
+
+  /// A plain pointer arrow, tip at the origin. Filled in MapLibre blue and
+  /// outlined in white by the stylesheet, so it reads on the globe's sea
+  /// and on its land.
+  static const _arrowPath = 'M1 1 L1 17 L5.5 12.8 L8.6 20 L11.4 18.8 L8.3 11.7 L14.2 11.7 Z';
 
   @override
   Component build(BuildContext context) {
-    return div(classes: 'map-pane', attributes: {'aria-hidden': 'true'}, [
+    // Not aria-hidden: the map takes focus and the pointer now (dots answer
+    // a hover, the open source globe can be dragged), and hiding a focused
+    // element from assistive technology is what Chrome rightly warns about.
+    return div(classes: 'map-pane', [
       FlutterEmbedView.deferred(
         classes: 'map-view',
         // Shown until Flutter draws its first frame: the outline of the
         // globe, in the same place, so the live map takes over from it.
         loader: div(classes: 'map-loader', [div(classes: 'map-loader-globe', [])]),
         loadLibrary: map.loadLibrary(),
-        builder: () => map.SiteMap(scene: scene, onPoint: onPoint),
+        builder: () => map.SiteMap(scene: scene, onPoint: onPoint, onSpin: onSpin),
       ),
       div(classes: 'map-fade', []),
+      // The hint is a cursor with a name tag, like the ones that show where
+      // Claude is pointing: it glides up to the globe, presses, drags a
+      // little, lets go, and says what it is doing.
+      if (hint case final hint?)
+        div(classes: 'map-cursor', [
+          svg(
+            viewBox: '0 0 16 22',
+            width: 18.px,
+            height: 24.px,
+            classes: 'cursor-arrow',
+            attributes: {'aria-hidden': 'true'},
+            [path(d: _arrowPath, [])],
+          ),
+          span(classes: 'cursor-label', [.text(hint)]),
+        ]),
       if (tip case final tip?)
         div(
           // Towards the right edge the label opens to the left of the
@@ -68,7 +103,18 @@ class MapPane extends StatelessComponent {
               ]),
           ],
         ),
-      p(classes: 'map-caption', [.text(caption)]),
+      p(classes: clear == null ? 'map-caption' : 'map-caption with-clear', [
+        .text(caption),
+        // The visible way out of a selected talk stop, on a phone the
+        // obvious one: the caption names the stop, the cross lets it go.
+        if (clear case (final label, final onPressed))
+          button(
+            classes: 'caption-clear',
+            attributes: {'type': 'button', 'aria-label': label, 'title': label},
+            onClick: onPressed,
+            [.text('×')],
+          ),
+      ]),
     ]);
   }
 }

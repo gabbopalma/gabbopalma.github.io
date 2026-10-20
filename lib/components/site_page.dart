@@ -48,9 +48,15 @@ class SitePageState extends State<SitePage> {
   /// The dot on the map under the pointer, if any.
   PointedPlace? _pointed;
 
+  /// The reader has spun the open source globe once: the hint has done its
+  /// job and does not come back.
+  bool _spun = false;
+
   late PackageStats _stats = PackageStats(monthlyDownloads: component.downloads, stars: component.stars);
 
   JSFunction? _onScroll;
+  JSFunction? _onClickAnywhere;
+  JSFunction? _onKey;
   bool _frameRequested = false;
 
   Lang get _lang => Lang.fromCode(component.langCode);
@@ -64,6 +70,26 @@ class SitePageState extends State<SitePage> {
     web.window.addEventListener('scroll', _onScroll, web.AddEventListenerOptions(passive: true));
     web.window.addEventListener('resize', _onScroll);
     _scheduleDetect();
+
+    // Letting go of a selected stop: a tap or a click anywhere that is not
+    // a stop (the stop itself toggles), or Escape.
+    _onClickAnywhere = ((web.Event event) {
+      if (_focused == null) return;
+      final target = event.target;
+      if (target != null && target.isA<web.Element>() && (target as web.Element).closest('.stops .stop') != null) {
+        return;
+      }
+      _focus(null);
+    }).toJS;
+    _onKey = ((web.KeyboardEvent event) {
+      if (event.key != 'Escape') return;
+      _focus(null);
+      // A stop that still holds focus would keep its ring after letting go.
+      final active = web.document.activeElement;
+      if (active != null && active.closest('.stops .stop') != null) (active as web.HTMLElement).blur();
+    }).toJS;
+    web.document.addEventListener('click', _onClickAnywhere);
+    web.document.addEventListener('keydown', _onKey);
 
     // Ask again from the browser: the build may be days old. Keeps the
     // build's numbers for any source that does not answer.
@@ -82,6 +108,8 @@ class SitePageState extends State<SitePage> {
       web.window.removeEventListener('scroll', listener);
       web.window.removeEventListener('resize', listener);
     }
+    if (_onClickAnywhere case final listener?) web.document.removeEventListener('click', listener);
+    if (_onKey case final listener?) web.document.removeEventListener('keydown', listener);
     super.dispose();
   }
 
@@ -126,6 +154,11 @@ class SitePageState extends State<SitePage> {
   void _focus(Stop? stop) {
     if (identical(stop, _focused)) return;
     setState(() => _focused = stop);
+  }
+
+  void _spin() {
+    if (_spun) return;
+    setState(() => _spun = true);
   }
 
   void _point(PointedPlace? place) {
@@ -214,8 +247,11 @@ class SitePageState extends State<SitePage> {
       MapPane(
         scene: MapScene(_section, focus: _section == Section.talks ? _focused?.place : null),
         caption: _caption(lang),
+        clear: _focused != null && _section == Section.talks ? (TalksCopy.showAll[lang], () => _focus(null)) : null,
         onPoint: _point,
+        onSpin: _spin,
         tip: _tip(lang),
+        hint: _section == Section.openSource && !_spun ? OpenSourceCopy.dragHint[lang] : null,
       ),
     ]);
   }
