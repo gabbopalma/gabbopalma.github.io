@@ -388,8 +388,8 @@ abstract final class ContactCopy {
     ('GitHub', 'gabbopalma', Links.github),
     ('LinkedIn', 'gabrielpalmisano', Links.linkedin),
     ('Sessionize', 'gabrielpalmisano', Links.sessionize),
-    ('X', '@gabbpalma', Links.x),
     ('Instagram', 'gabrielpalmisano', Links.instagram),
+    ('X', '@gabbpalma', Links.x),
   ];
   static const footer = Txt(
     'Built with Jaspr, Flutter and maplibre_gl. Map data: Natural Earth.',

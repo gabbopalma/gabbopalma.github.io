@@ -16,8 +16,8 @@ class ContactSection extends StatelessComponent {
     'GitHub': BrandIcon.github,
     'LinkedIn': BrandIcon.linkedin,
     'Sessionize': BrandIcon.sessionize,
-    'X': BrandIcon.x,
     'Instagram': BrandIcon.instagram,
+    'X': BrandIcon.x,
   };
 
   @override
