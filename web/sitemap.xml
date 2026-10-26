@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The two pages, each with its other language, as the hreflang links in their heads. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://gabbopalma.github.io/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gabbopalma.github.io/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://gabbopalma.github.io/it/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gabbopalma.github.io/"/>
+  </url>
+  <url>
+    <loc>https://gabbopalma.github.io/it/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gabbopalma.github.io/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://gabbopalma.github.io/it/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gabbopalma.github.io/"/>
+  </url>
+</urlset>

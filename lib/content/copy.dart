@@ -24,6 +24,11 @@ abstract final class Links {
   static const interopBlog = 'https://blog.flutter.dev/flutters-path-towards-seamless-interop-4bf7d4579d9a';
   static const ffiPullRequest = 'https://github.com/maplibre/flutter-maplibre-gl/pull/906';
   static const ebworld = 'https://www.ebw.it/';
+
+  /// The site code on GoatCounter, which counts visits without cookies or
+  /// personal data, so the site needs no consent banner. The dashboard is
+  /// at https://gabbopalma.goatcounter.com.
+  static const goatCounter = 'gabbopalma';
 }
 
 abstract final class Meta {
@@ -33,9 +38,9 @@ abstract final class Meta {
   );
   static const description = Txt(
     'Flutter developer from Bari, Italy. Lead maintainer of maplibre_gl, the '
-        'Flutter package of MapLibre. Talks, open source and work.',
+        'Flutter package of MapLibre. Talks, open source and experience.',
     'Sviluppatore Flutter a Bari e lead maintainer di maplibre_gl, il '
-        'package Flutter di MapLibre. Talk, open source e lavoro.',
+        'package Flutter di MapLibre. Talk, open source ed esperienza.',
   );
 }
 

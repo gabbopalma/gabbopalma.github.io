@@ -8,6 +8,8 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/server.dart';
 
 import 'app.dart';
+import 'click_counter.dart';
+import 'content/copy.dart';
 import 'content/package_stats.dart';
 import 'main.server.options.dart';
 
@@ -39,6 +41,14 @@ Future<void> main() async {
         // Flutter's loader. The map's engine starts from here, after the
         // page's own text is already on screen.
         script(src: 'flutter_bootstrap.js', async: true),
+        // One page view per load. GoatCounter's script skips localhost on
+        // its own, so local builds count nothing.
+        script(
+          src: 'https://gc.zgo.at/count.js',
+          async: true,
+          attributes: {'data-goatcounter': 'https://${Links.goatCounter}.goatcounter.com/count'},
+        ),
+        script(content: clickCounterScript()),
       ],
       body: App(stats: stats),
     ),
