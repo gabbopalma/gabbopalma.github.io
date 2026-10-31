@@ -37,6 +37,7 @@ ClientOptions get defaultClientOptions => ClientOptions(
         langCode: p['langCode'] as String,
         downloads: p['downloads'] as int,
         stars: p['stars'] as int,
+        deck: p['deck'] as String?,
       ),
       loader: _site_page.loadLibrary,
     ),

@@ -14,9 +14,13 @@ class TalksSection extends StatelessComponent {
     required this.now,
     required this.focused,
     required this.onFocus,
+    required this.onOpenDeck,
     this.pointedCities = const {},
     super.key,
   });
+
+  /// Opens a talk's slides in the viewer.
+  final void Function(Talk talk) onOpenDeck;
 
   /// [Place.name] of the dots the reader points at on the map: every stop in
   /// those cities lights up, the other way round from [onFocus].
@@ -72,9 +76,42 @@ class TalksSection extends StatelessComponent {
         ]),
       ]),
       p(classes: 'summary', [.text(talk.summary[lang])]),
+      if (talk.deck case final deck?) _deck(talk, deck),
       ol(classes: 'stops', [for (final stop in talk.stops) _stop(stop)]),
     ]);
   }
+
+  /// The way into a talk's slides: its cover, small, and how many there are.
+  /// A link to the deck's own page, which a plain click opens in place; a
+  /// click with a modifier, or the middle button, gets the page itself.
+  Component _deck(Talk talk, Deck deck) => a(
+    href: deck.path(lang),
+    classes: 'deck-open',
+    attributes: {
+      'aria-haspopup': 'dialog',
+      'data-deck': deck.id,
+      'data-count': 'slides/${deck.id}',
+    },
+    events: {
+      'click': (event) {
+        final click = event as web.MouseEvent;
+        if (click.button != 0 || click.metaKey || click.ctrlKey || click.shiftKey || click.altKey) return;
+        click.preventDefault();
+        onOpenDeck(talk);
+      },
+    },
+    [
+      img(
+        src: deck.cover,
+        alt: '',
+        attributes: {'width': '640', 'height': '360', 'loading': 'lazy', 'decoding': 'async'},
+      ),
+      span(classes: 'deck-label', [
+        span(classes: 'deck-title', [.text(TalksCopy.openSlides[lang])]),
+        span(classes: 'deck-meta', [.text('${deck.pages} ${TalksCopy.slides[lang]} · PDF')]),
+      ]),
+    ],
+  );
 
   /// A mouse, where pointing is free; on a phone pointing means tapping.
   static bool get _canHover => kIsWeb && web.window.matchMedia('(hover: hover)').matches;

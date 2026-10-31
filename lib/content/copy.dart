@@ -274,6 +274,24 @@ abstract final class TalksCopy {
   static const showAll = Txt('Show all talks', 'Mostra tutti i talk');
   static const inviteBefore = Txt('Want a talk at your event? ', 'Organizzi un evento? ');
   static const inviteLink = Txt('My sessions are on Sessionize.', 'Trovi le mie sessioni su Sessionize.');
+
+  // The slides of a talk, and the viewer they open in.
+  static const openSlides = Txt('Flip through the slides', 'Sfoglia le slide');
+  static const slides = Txt('slides', 'slide');
+  static const slide = Txt('Slide', 'Slide');
+  static const of = Txt('of', 'di');
+  static const previous = Txt('Previous slide', 'Slide precedente');
+  static const next = Txt('Next slide', 'Slide successiva');
+  static const download = Txt('Download the PDF', 'Scarica il PDF');
+  static const close = Txt('Close', 'Chiudi');
+  static const link = Txt('Link', 'Link');
+  static const linkHint = Txt('Copy the link to this slide', 'Copia il link a questa slide');
+  static const copied = Txt('Copied', 'Copiato');
+  static const zoomIn = Txt('Zoom in (or click the slide)', 'Ingrandisci (o clic sulla slide)');
+  static const zoomOut = Txt('Zoom out', 'Riduci');
+
+  /// In the title of a deck's own page: "Chasing Behavioral Parity · Slides".
+  static const slidesTitle = Txt('Slides', 'Slide');
 }
 
 class Job {

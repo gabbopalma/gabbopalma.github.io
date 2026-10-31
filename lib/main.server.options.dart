@@ -37,4 +37,5 @@ Map<String, Object?> __site_pageSitePage(_site_page.SitePage c) => {
   'langCode': c.langCode,
   'downloads': c.downloads,
   'stars': c.stars,
+  'deck': c.deck,
 };

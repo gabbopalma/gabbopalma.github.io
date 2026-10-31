@@ -19,23 +19,35 @@ const _names = {
   Links.ebworld: 'ebworld',
 };
 
-/// Counts the clicks that leave the site as GoatCounter events.
+/// Counts the clicks that leave the site as GoatCounter events, and the
+/// ones on anything marked `data-count`.
 ///
-/// Each is named by where it goes and the section it was in, like
-/// `click/sessionize/talks`, so the dashboard shows which links people follow
-/// and from where. Plain JavaScript in the head, listening on the document:
-/// it counts before the page is hydrated and whatever the page re-renders.
-/// Like the page views, GoatCounter sends nothing from localhost.
+/// A link that leaves is named by where it goes and the section it was in,
+/// like `click/sessionize/talks`, so the dashboard shows which links people
+/// follow and from where. A marked element is counted under its own name,
+/// like `slides/agentic-testing`. Plain JavaScript in the head, listening on
+/// the document: it counts before the page is hydrated and whatever the page
+/// re-renders. Like the page views, GoatCounter sends nothing from localhost.
 String clickCounterScript() => '''
 (function () {
   var names = ${jsonEncode(_names)};
   function count(event) {
-    var link = event.target.closest && event.target.closest('a[href]');
+    if (!event.target.closest) return;
+    var counter = window.goatcounter;
+    if (!counter || !counter.count) return;
+    var marked = event.target.closest('[data-count]');
+    if (marked) {
+      counter.count({
+        path: marked.getAttribute('data-count'),
+        title: marked.getAttribute('title') || marked.innerText.replace(/\\s+/g, ' ').trim(),
+        event: true,
+      });
+      return;
+    }
+    var link = event.target.closest('a[href]');
     if (!link) return;
     var mail = link.protocol === 'mailto:';
     if (!mail && link.host === location.host) return;
-    var counter = window.goatcounter;
-    if (!counter || !counter.count) return;
     var name = names[link.getAttribute('href')] ||
       (mail ? 'email' : link.hostname.replace(/^www\\./, '') + link.pathname.replace(/\\/\$/, '') + link.search);
     var section = link.closest('section[id]');

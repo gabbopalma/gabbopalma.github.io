@@ -30,6 +30,37 @@ class Stop {
   bool isPastAt(DateTime now) => !date.isAfter(now);
 }
 
+/// A talk's slides: one image per slide, rendered from the PDF into
+/// `web/slides/<id>/`, and the PDF itself for whoever wants to keep it.
+class Deck {
+  const Deck(this.id, this.pages);
+
+  /// The folder under `web/slides`, and the deck's name in the visit counts.
+  final String id;
+  final int pages;
+
+  String get cover => 'slides/$id/cover.webp';
+  String get pdf => 'slides/$id/slides.pdf';
+
+  /// The first slide as a JPEG for link previews: the social sites that
+  /// draw one do not all read WebP.
+  String get share => 'slides/$id/share.jpg';
+
+  /// The deck's own page, which opens on its slides: `/slides/<id>/`, or
+  /// under `/it/` in Italian.
+  String path(Lang lang) => '${lang.path}slides/$id/';
+
+  /// The slide at [index], from 0: 1920 pixels wide, enough for a phone or
+  /// a plain screen.
+  String slide(int index) => 'slides/$id/${_number(index)}.webp';
+
+  /// The same slide at 3840, for a large sharp screen: a slide shown 1500
+  /// points wide on a Retina display needs 3000 pixels, and blurs on less.
+  String sharpSlide(int index) => 'slides/$id/${_number(index)}@2x.webp';
+
+  String _number(int index) => (index + 1).toString().padLeft(2, '0');
+}
+
 class Talk {
   const Talk({
     required this.title,
@@ -37,7 +68,11 @@ class Talk {
     required this.language,
     required this.summary,
     required this.stops,
+    this.deck,
   });
+
+  /// The slides, for the talks whose PDF is shared.
+  final Deck? deck;
 
   /// In the language the talk was given in, on both pages.
   final String title;
@@ -65,12 +100,13 @@ final talks = <Talk>[
       'Come far comportare la mappa allo stesso modo su Android, iOS e web con '
           'una sola API Dart, anche se ogni piattaforma ha un engine diverso.',
     ),
+    deck: Deck('behavioral-parity', 25),
     stops: [
       Stop(
         date: _d(2026, 10, 9),
         event: Txt.same('flutterCon, next.app devCon'),
         place: Places.berlin,
-        audience: 50,
+        audience: 80,
       ),
     ],
   ),
@@ -84,6 +120,8 @@ final talks = <Talk>[
       "AI agent che usano un'app Flutter al posto tuo tramite il Dart VM "
           'Service, e come affiancarli a una CI deterministica.',
     ),
+    // The English edition of the deck, the one shared on Drive.
+    deck: Deck('agentic-testing', 20),
     stops: [
       Stop(
         date: _d(2026, 4, 9),
@@ -119,6 +157,7 @@ final talks = <Talk>[
         date: _d(2026, 10, 24),
         event: Txt.same('DevFest Venezia'),
         place: Places.mestre,
+        audience: 80,
       ),
     ],
   ),
@@ -136,7 +175,7 @@ final talks = <Talk>[
         date: _d(2026, 10, 17),
         event: Txt.same('DevFest Lecce'),
         place: Places.lecce,
-        audience: 60,
+        audience: 80,
       ),
     ],
   ),
@@ -262,11 +301,12 @@ String formatDate(DateTime date, Lang lang) {
   return '${date.day} $month ${date.year}';
 }
 
-/// People in the room, to the nearest fifty with a tilde: "~800" for 796.
+/// People in the room, rounded down to fifty with a plus, like the
+/// downloads and the stars: "900+" for 926, never more than were there.
 /// Below a hundred the count is small enough to say as it is.
 String approxPeople(int value, Lang lang) {
   if (value < 100) return formatNumber(value, lang);
-  return '~${formatNumber((value / 50).round() * 50, lang)}';
+  return '${formatNumber(value ~/ 50 * 50, lang)}+';
 }
 
 String formatNumber(int value, Lang lang) {

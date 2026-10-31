@@ -1091,6 +1091,401 @@ p {
   font-size: 16px;
 }
 
+/* A talk's slides: its cover, small, as the way in. */
+.deck-open {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 1em;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.deck-open:hover {
+  color: var(--ink);
+}
+
+.deck-open img {
+  flex: none;
+  width: 128px;
+  height: 72px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px var(--hairline), 0 8px 18px -12px rgba(17, 23, 37, 0.45);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.deck-open:hover img {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px var(--hairline-strong), 0 12px 24px -12px rgba(17, 23, 37, 0.5);
+}
+
+.deck-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.deck-title {
+  font-size: 16px;
+  font-weight: 500;
+  transition: color 160ms ease;
+}
+
+.deck-open:hover .deck-title {
+  color: var(--primary);
+}
+
+.deck-meta {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.deck-open:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* The slide viewer: the deck over the whole page, on the ink, so slides
+   made on white stand out. Bar, slides, progress, top to bottom. */
+html.viewer-open {
+  overflow: hidden;
+}
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* One column, never wider than the screen: left to itself it grows to
+     fit the bar, and the slides with it. */
+  grid-template-columns: minmax(0, 1fr);
+  background: rgba(13, 17, 28, 0.97);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  outline: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .viewer.fade-in {
+    animation: viewer-in 220ms ease;
+  }
+}
+
+@keyframes viewer-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.viewer-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px clamp(16px, 3vw, 32px);
+}
+
+.viewer-title {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  font-family: var(--display);
+  font-size: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewer-count {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* The two pills share one height; the cross stays the larger, as the way
+   out comes first. */
+.viewer-pdf,
+.viewer-link,
+.viewer-zoom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 34px;
+  min-width: 34px;
+  margin: 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: box-shadow 160ms ease, color 160ms ease;
+}
+
+.viewer-pdf:hover,
+.viewer-link:hover,
+.viewer-zoom:hover {
+  color: #fff;
+  box-shadow: inset 0 0 0 1px #fff;
+}
+
+/* The lens: a circle, as tall as the pills, and only where there is a
+   mouse. A finger pinches instead. */
+.viewer-zoom {
+  display: none;
+  width: 34px;
+  padding: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .viewer-zoom {
+    display: inline-flex;
+  }
+}
+
+.viewer-zoom[aria-pressed='true'] {
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.viewer-link.copied {
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.viewer-close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.viewer-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* The slides side by side, one screen each, snapping: a swipe is the
+   browser's own scroll. No scrollbar: the arrows, the count and the
+   progress say where you are. */
+.viewer-track {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.viewer-track::-webkit-scrollbar {
+  display: none;
+}
+
+.viewer-slide {
+  position: relative;
+  flex: 0 0 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 clamp(16px, 7vw, 104px) clamp(16px, 4vh, 40px);
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+/* As wide as the column allows, as long as it still fits the height. */
+.viewer-slide img {
+  display: block;
+  width: min(100%, (100vh - 150px) * 16 / 9);
+  width: min(100%, (100dvh - 150px) * 16 / 9);
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 28px 64px -28px rgba(0, 0, 0, 0.7);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.viewer-nav {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 160ms ease, opacity 160ms ease;
+}
+
+.viewer-nav svg,
+.viewer-pdf svg,
+.viewer-link svg,
+.viewer-zoom svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.viewer-nav:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.viewer-nav[disabled] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.viewer-nav.prev {
+  left: clamp(8px, 2vw, 28px);
+}
+
+.viewer-nav.next {
+  right: clamp(8px, 2vw, 28px);
+}
+
+.viewer-nav.next svg {
+  transform: scaleX(-1);
+}
+
+.viewer-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.viewer-progress-bar {
+  height: 100%;
+  background: var(--accent);
+  transition: width 240ms ease;
+}
+
+.viewer :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* On a touch screen the slides are swiped: the arrows would only cover
+   them. */
+@media (hover: none) {
+  .viewer-nav {
+    display: none;
+  }
+}
+
+/* Zoom. A mouse clicks a slide to see it at twice its size, there, and
+   moves around it by dragging or with the wheel; another click lets go. */
+@media (hover: hover) and (pointer: fine) {
+  .viewer-slide img {
+    cursor: zoom-in;
+  }
+}
+
+.viewer-slide.zoomed {
+  display: block;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding: 0;
+}
+
+.viewer-slide.zoomed::-webkit-scrollbar {
+  display: none;
+}
+
+.viewer-slide.zoomed img {
+  width: calc(2 * min(100vw - 2 * clamp(16px, 7vw, 104px), (100vh - 150px) * 16 / 9));
+  width: calc(2 * min(100vw - 2 * clamp(16px, 7vw, 104px), (100dvh - 150px) * 16 / 9));
+  max-width: none;
+  margin: 0 auto;
+  border-radius: 0;
+  cursor: zoom-out;
+}
+
+.viewer-slide.zoomed.grabbing img {
+  cursor: grabbing;
+}
+
+/* While zoomed in, by a click or by a pinch, the slides hold still: the
+   pointer or the finger moves around the slide instead of turning it. */
+.viewer.held .viewer-track {
+  overflow-x: hidden;
+}
+
+@media (max-width: 900px) {
+  /* Everything but the title keeps its size; the title gives way. */
+  .viewer-bar {
+    gap: 8px;
+    padding: 10px 10px 10px 14px;
+  }
+
+  .viewer-bar > :not(.viewer-title) {
+    flex: none;
+  }
+
+  .viewer-title {
+    font-size: 16px;
+  }
+
+  .viewer-count {
+    font-size: 12px;
+  }
+
+  .viewer-pdf,
+  .viewer-link {
+    height: 32px;
+    min-width: 32px;
+  }
+
+  .viewer-pdf {
+    padding: 0 11px;
+  }
+
+  /* The link is the chain alone here: a circle as tall as the PDF pill. */
+  .viewer-link {
+    width: 32px;
+    padding: 0;
+  }
+
+  /* On a phone the link is the chain alone: the bar is narrow. */
+  .viewer-link span {
+    display: none;
+  }
+
+  .viewer-slide {
+    padding: 0 12px 24px;
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Work                                                               */
 /* ------------------------------------------------------------------ */

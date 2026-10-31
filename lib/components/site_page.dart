@@ -18,6 +18,7 @@ import 'sections/hero_section.dart';
 import 'sections/open_source_section.dart';
 import 'sections/talks_section.dart';
 import 'sections/work_section.dart';
+import 'slide_viewer.dart';
 import 'top_bar.dart';
 
 /// The whole page, in one language.
@@ -27,7 +28,7 @@ import 'top_bar.dart';
 /// know which section the reader is on, and hands that to the map.
 @client
 class SitePage extends StatefulComponent {
-  const SitePage({required this.langCode, required this.downloads, required this.stars, super.key});
+  const SitePage({required this.langCode, required this.downloads, required this.stars, this.deck, super.key});
 
   /// A string rather than a [Lang], because a client component's parameters
   /// travel from the server to the browser inside the HTML.
@@ -36,6 +37,9 @@ class SitePage extends StatefulComponent {
   /// The package numbers as the build read them. See [PackageStats].
   final int downloads;
   final int stars;
+
+  /// On a deck's own page, the [Deck.id] of the slides it opens on.
+  final String? deck;
 
   @override
   State<SitePage> createState() => SitePageState();
@@ -54,9 +58,26 @@ class SitePageState extends State<SitePage> {
 
   late PackageStats _stats = PackageStats(monthlyDownloads: component.downloads, stars: component.stars);
 
+  /// The talk whose slides are open, and the slide in view.
+  Talk? _deck;
+  int _slide = 0;
+
+  /// The slide in view at twice its size, by the mouse or the keys.
+  bool _zoomed = false;
+
+  /// The browser's own zoom is in, from a pinch on a phone.
+  bool _pinched = false;
+
+  /// The slides were opened from the page, with a history entry of their
+  /// own, so the back button closes them. A deck's own page opens with none:
+  /// there, back leaves.
+  bool _pushed = false;
+
   JSFunction? _onScroll;
   JSFunction? _onClickAnywhere;
   JSFunction? _onKey;
+  JSFunction? _onBack;
+  JSFunction? _onPinch;
   bool _frameRequested = false;
 
   Lang get _lang => Lang.fromCode(component.langCode);
@@ -64,7 +85,41 @@ class SitePageState extends State<SitePage> {
   @override
   void initState() {
     super.initState();
+
+    // A deck's own page opens on its slides from the first render, so the
+    // viewer is in the HTML before any script runs.
+    if (component.deck case final id?) _deck = talks.where((talk) => talk.deck?.id == id).firstOrNull;
+
     if (!kIsWeb) return;
+
+    if (_deck != null) {
+      // "#7" in the address is the seventh slide.
+      final asked = int.tryParse(web.window.location.hash.replaceFirst('#', ''));
+      web.window.requestAnimationFrame(
+        ((JSNumber _) {
+          // Only now, after hydration: it sets the page's attributes back to
+          // the pre-rendered ones, and inert is not among them.
+          _shutOut(true);
+          (web.document.querySelector('.viewer') as web.HTMLElement?)?.focus();
+          if (asked != null && asked > 1) SlideViewer.go(asked - 1, instant: true);
+        }).toJS,
+      );
+    }
+
+    _onBack = ((web.Event _) {
+      if (_deck == null || !_pushed) return;
+      _pushed = false;
+      _closeDeck(fromHistory: true);
+    }).toJS;
+    web.window.addEventListener('popstate', _onBack);
+
+    // A pinch zooms the visual viewport; while it is in, the slides hold
+    // still, so a finger moves around the slide instead of turning it.
+    _onPinch = ((web.Event _) {
+      final pinched = (web.window.visualViewport?.scale ?? 1) > 1.01;
+      if (pinched != _pinched) setState(() => _pinched = pinched);
+    }).toJS;
+    web.window.visualViewport?.addEventListener('resize', _onPinch);
 
     _onScroll = ((web.Event _) => _scheduleDetect()).toJS;
     web.window.addEventListener('scroll', _onScroll, web.AddEventListenerOptions(passive: true));
@@ -82,6 +137,10 @@ class SitePageState extends State<SitePage> {
       _focus(null);
     }).toJS;
     _onKey = ((web.KeyboardEvent event) {
+      if (_deck != null) {
+        _onViewerKey(event);
+        return;
+      }
       if (event.key != 'Escape') return;
       _focus(null);
       // A stop that still holds focus would keep its ring after letting go.
@@ -110,6 +169,8 @@ class SitePageState extends State<SitePage> {
     }
     if (_onClickAnywhere case final listener?) web.document.removeEventListener('click', listener);
     if (_onKey case final listener?) web.document.removeEventListener('keydown', listener);
+    if (_onBack case final listener?) web.window.removeEventListener('popstate', listener);
+    if (_onPinch case final listener?) web.window.visualViewport?.removeEventListener('resize', listener);
     super.dispose();
   }
 
@@ -154,6 +215,107 @@ class SitePageState extends State<SitePage> {
   void _focus(Stop? stop) {
     if (identical(stop, _focused)) return;
     setState(() => _focused = stop);
+  }
+
+  void _openDeck(Talk talk) {
+    SlideViewer.reset();
+    setState(() {
+      _deck = talk;
+      _slide = 0;
+    });
+    _shutOut(true);
+    // The slides get an address of their own and a step in the history, so
+    // the address can be shared and the back button closes them.
+    if (talk.deck case final deck?) {
+      web.window.history.pushState(null, '', deck.path(_lang));
+      _pushed = true;
+    }
+    // Once the viewer is on the page it takes the focus, so the keys and a
+    // screen reader start from it.
+    web.window.requestAnimationFrame(
+      ((JSNumber _) => (web.document.querySelector('.viewer') as web.HTMLElement?)?.focus()).toJS,
+    );
+  }
+
+  /// The address follows the slide in view: "#7" for the seventh, nothing
+  /// for the first, so the address bar always links to what is on screen.
+  void _turnTo(int page) {
+    setState(() {
+      _slide = page;
+      _zoomed = false;
+    });
+    if (_deck?.deck case final deck?) {
+      web.window.history.replaceState(null, '', '${deck.path(_lang)}${page > 0 ? '#${page + 1}' : ''}');
+    }
+  }
+
+  /// Closes the slides. Opened from the page, they take their history step
+  /// away with them, unless the back button already has. On a deck's own
+  /// page there is no step to go back to: the address becomes the site's,
+  /// at its talks, and the page scrolls there.
+  void _closeDeck({bool fromHistory = false}) {
+    final id = _deck?.deck?.id;
+    setState(() {
+      _deck = null;
+      _zoomed = false;
+    });
+    _shutOut(false);
+    var landed = false;
+    if (_pushed) {
+      _pushed = false;
+      web.window.history.back();
+    } else if (!fromHistory) {
+      web.window.history.replaceState(null, '', '${_lang.path}#${Section.talks.anchor}');
+      landed = true;
+    }
+    // Back to the cover of the deck.
+    if (id == null) return;
+    final cover = web.document.querySelector('.deck-open[data-deck="$id"]') as web.HTMLElement?;
+    if (landed) cover?.scrollIntoView(web.ScrollIntoViewOptions(block: 'center', behavior: 'instant'));
+    cover?.focus(web.FocusOptions(preventScroll: true));
+  }
+
+  /// While the viewer is open, the page behind it neither scrolls nor takes
+  /// the focus.
+  void _shutOut(bool shut) {
+    web.document.documentElement!.classList.toggle('viewer-open', shut);
+    for (final selector in const ['.topbar', 'main.content', '.map-pane']) {
+      (web.document.querySelector(selector) as web.HTMLElement?)?.inert = shut;
+    }
+  }
+
+  /// Arrows and page keys turn the slides, Home and End jump to either end,
+  /// + and - zoom, Escape lets go of the zoom first, then closes.
+  void _onViewerKey(web.KeyboardEvent event) {
+    if (event.key == 'Escape') {
+      if (_zoomed) {
+        setState(() => _zoomed = false);
+      } else {
+        _closeDeck();
+      }
+      return;
+    }
+    if (event.key == '+' || event.key == '=') {
+      if (!_zoomed) {
+        setState(() => _zoomed = true);
+        SlideViewer.centerSoon((0.5, 0.5));
+      }
+      return;
+    }
+    if (event.key == '-') {
+      if (_zoomed) setState(() => _zoomed = false);
+      return;
+    }
+    final void Function()? turn = switch (event.key) {
+      'ArrowRight' || 'PageDown' => () => SlideViewer.step(1, _slide),
+      'ArrowLeft' || 'PageUp' => () => SlideViewer.step(-1, _slide),
+      'Home' => () => SlideViewer.go(0),
+      'End' => () => SlideViewer.go((_deck?.deck?.pages ?? 1) - 1),
+      _ => null,
+    };
+    if (turn == null) return;
+    event.preventDefault();
+    turn();
   }
 
   void _spin() {
@@ -239,6 +401,7 @@ class SitePageState extends State<SitePage> {
           now: now,
           focused: _focused,
           onFocus: _focus,
+          onOpenDeck: _openDeck,
           pointedCities: _pointedIn(PlaceGroup.talk),
         ),
         WorkSection(lang: lang),
@@ -253,6 +416,20 @@ class SitePageState extends State<SitePage> {
         tip: _tip(lang),
         hint: _section == Section.openSource && !_spun ? OpenSourceCopy.dragHint[lang] : null,
       ),
+      if (_deck case final talk?)
+        if (talk.deck case final deck?)
+          SlideViewer(
+            talk: talk,
+            deck: deck,
+            lang: lang,
+            page: _slide,
+            onPage: _turnTo,
+            onClose: _closeDeck,
+            onZoom: (zoomed) => setState(() => _zoomed = zoomed),
+            zoomed: _zoomed,
+            pinched: _pinched,
+            fadeIn: _pushed,
+          ),
     ]);
   }
 }
