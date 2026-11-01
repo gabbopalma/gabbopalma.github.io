@@ -33,8 +33,8 @@ abstract final class Links {
 
 abstract final class Meta {
   static const title = Txt(
-    'Gabriel Palmisano · Flutter, maps and MapLibre',
-    'Gabriel Palmisano · Flutter, mappe e MapLibre',
+    'Gabriel Palmisano · Maps, Mobile and Open Source',
+    'Gabriel Palmisano · Mappe, Mobile e Open Source',
   );
   static const description = Txt(
     'Flutter developer from Bari, Italy. Lead maintainer of maplibre_gl, the '

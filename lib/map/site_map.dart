@@ -402,7 +402,7 @@ class _SiteMapState extends State<SiteMap> with SingleTickerProviderStateMixin {
   }
 
   /// Colours and markers for a scene. The style's root transition animates
-  /// every change, so the land fades between the globe's blue and the paper
+  /// every change, so the land fades between the globe's indigo and the paper
   /// map instead of switching.
   Future<void> _paint(MapScene scene) async {
     final controller = _controller;

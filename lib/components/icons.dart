@@ -4,7 +4,7 @@ import 'package:jaspr/jaspr.dart';
 /// The few brand marks the page uses, drawn in the site's own colours.
 ///
 /// Inline paths filled with `currentColor`, so the stylesheet decides the
-/// colour like it does for text: ink at rest, MapLibre blue on hover, never
+/// colour like it does for text: ink at rest, the site's indigo on hover, never
 /// the brands' own colours. Sources: Bootstrap Icons (MIT) and Simple Icons
 /// (CC0, Sessionize).
 enum BrandIcon {

@@ -1,10 +1,10 @@
 /*
  * Gabriel Palmisano, personal site.
  *
- * The visual language is the Berlin deck's: MapLibre's blue on a white a
- * breath towards blue, Alata for titles, Inter Tight for text, JetBrains Mono
- * for numbers, dates and coordinates. Hairlines, position and type size carry
- * the structure; filled boxes only where something is being pointed at.
+ * The visual language: a night indigo on a white a breath towards it,
+ * Alata for titles, Inter Tight for text, JetBrains Mono for numbers, dates
+ * and coordinates. Hairlines, position and type size carry the structure;
+ * filled boxes only where something is being pointed at.
  */
 
 /* Fonts: served from the site, latin and latin-ext subsets only. */
@@ -58,12 +58,12 @@
 }
 
 :root {
-  /* The ground: a white a breath towards the palette blue. */
-  --ground: #F7F9FC;
-  --surface: #EBF1FA;
-  --primary: #285DAA;
-  --primary-deep: #1F4C8F;
-  --accent: #95BEFA;
+  /* The ground: a white a breath towards the palette indigo. */
+  --ground: #F8F8FC;
+  --surface: #EEEDF7;
+  --primary: #2E2A6B;
+  --primary-deep: #221F52;
+  --accent: #BDB6EE;
   --ink: #111725;
 
   /* The text ramp is the ink at three strengths. */
@@ -75,7 +75,7 @@
   --hairline-strong: rgba(17, 23, 37, 0.24);
 
   /* The light accent behind a word, like a highlighter. Never text colour. */
-  --marker: rgba(149, 190, 250, 0.55);
+  --marker: rgba(189, 182, 238, 0.5);
 
   --display: 'Alata', 'Inter Tight', system-ui, sans-serif;
   --sans: 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -311,15 +311,34 @@ p {
   display: flex;
   align-items: center;
   gap: 28px;
-  background: linear-gradient(180deg, var(--ground) 62%, rgba(247, 249, 252, 0));
+  background: linear-gradient(180deg, var(--ground) 62%, rgba(248, 248, 252, 0));
 }
 
 .topbar .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--display);
   font-size: 18px;
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
+}
+
+/* The site's icon, a little taller than the name's capitals. */
+.brand-mark {
+  flex: none;
+  width: 26px;
+  height: 26px;
+}
+
+.brand-mark .brand-tile {
+  fill: var(--primary);
+  stroke: none;
+}
+
+.brand-mark .brand-dot {
+  fill: var(--accent);
 }
 
 .topbar .sections {
@@ -451,7 +470,7 @@ p {
     font-weight: 500;
     line-height: 1.2;
     white-space: nowrap;
-    box-shadow: 0 4px 14px rgba(40, 93, 170, 0.3);
+    box-shadow: 0 4px 14px rgba(46, 42, 107, 0.3);
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -515,7 +534,7 @@ p {
   gap: 2px;
   padding: 8px 12px 9px;
   border-radius: 10px;
-  background: rgba(247, 249, 252, 0.94);
+  background: rgba(248, 248, 252, 0.94);
   box-shadow: 0 0 0 1px var(--hairline), 0 8px 24px rgba(17, 23, 37, 0.12);
   transform: translate(18px, -50%);
   white-space: nowrap;
@@ -562,7 +581,7 @@ p {
   position: absolute;
   inset: 0 auto 0 0;
   width: 14%;
-  background: linear-gradient(90deg, var(--ground), rgba(247, 249, 252, 0));
+  background: linear-gradient(90deg, var(--ground), rgba(248, 248, 252, 0));
 }
 
 .map-caption {
@@ -573,7 +592,7 @@ p {
   max-width: calc(100% - 48px);
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(247, 249, 252, 0.88);
+  background: rgba(248, 248, 252, 0.88);
   box-shadow: 0 0 0 1px var(--hairline);
   font-family: var(--mono);
   font-size: 12.5px;
@@ -631,7 +650,7 @@ p {
   left: 8vw;
   top: calc(50% - 56vh);
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 34%, #DCE7F7, #CFDDF3 62%);
+  background: radial-gradient(circle at 38% 34%, #EAE9F5, #DDDBEF 62%);
   box-shadow: 0 18px 36px rgba(17, 23, 37, 0.12);
   animation: breathe 2.4s ease-in-out infinite;
 }
@@ -804,7 +823,7 @@ p {
 
 .rail .stop:last-child::before {
   background: var(--primary);
-  box-shadow: 0 0 0 5px rgba(40, 93, 170, 0.16);
+  box-shadow: 0 0 0 5px rgba(46, 42, 107, 0.16);
 }
 
 .rail .name {
@@ -1688,11 +1707,21 @@ html.viewer-open {
 
   .topbar .brand,
   .topbar .lang {
-    background: rgba(247, 249, 252, 0.9);
+    background: rgba(248, 248, 252, 0.9);
     box-shadow: 0 0 0 1px var(--hairline);
     border-radius: 999px;
     padding: 6px 12px;
     font-size: 14px;
+  }
+
+  .topbar .brand {
+    gap: 7px;
+    padding-left: 8px;
+  }
+
+  .brand-mark {
+    width: 20px;
+    height: 20px;
   }
 
   .topbar .lang {

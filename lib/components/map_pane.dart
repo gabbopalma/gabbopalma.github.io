@@ -49,7 +49,7 @@ class MapPane extends StatelessComponent {
   /// drag. The stylesheet shows it only where there is a mouse to drag with.
   final String? hint;
 
-  /// A plain pointer arrow, tip at the origin. Filled in MapLibre blue and
+  /// A plain pointer arrow, tip at the origin. Filled in the site's indigo and
   /// outlined in white by the stylesheet, so it reads on the globe's sea
   /// and on its land.
   static const _arrowPath = 'M1 1 L1 17 L5.5 12.8 L8.6 20 L11.4 18.8 L8.3 11.7 L14.2 11.7 Z';

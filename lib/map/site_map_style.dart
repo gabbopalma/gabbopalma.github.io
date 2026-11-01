@@ -12,16 +12,16 @@ import '../content/talks.dart';
 /// API key, no tile provider, and every colour comes from the deck palette
 /// instead of fighting it. Same approach as the Berlin deck.
 abstract final class MapPalette {
-  static const primary = '#285DAA';
-  static const accent = '#95BEFA';
+  static const primary = '#2E2A6B';
+  static const accent = '#BDB6EE';
 
   /// The sea of the globe, darker than the flat map's so the sphere reads as
   /// an object sitting on the page.
-  static const globeOcean = '#CFDDF3';
-  static const flatOcean = '#EAF1FB';
+  static const globeOcean = '#DDDBEF';
+  static const flatOcean = '#EEEDF7';
 
   /// Land on the flat maps: two clear steps away from the sea.
-  static const flatLand = '#AFC8EC';
+  static const flatLand = '#C6C2E4';
 }
 
 /// The feature id of a dot: its group and its place, which together are
@@ -75,7 +75,7 @@ final String siteMapStyle = jsonEncode({
   'version': 8,
   'name': 'gabriel-palmisano',
   // Every paint change between scenes animates over this, so the land turns
-  // from the globe's blue to the flat map's while the camera is flying.
+  // from the globe's indigo to the flat map's while the camera is flying.
   'transition': {'duration': 900, 'delay': 0},
   'sources': {
     'land-coarse': {'type': 'geojson', 'data': 'geo/land_110m.json'},

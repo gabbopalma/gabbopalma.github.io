@@ -26,7 +26,7 @@ Future<void> main() async {
       title: 'Gabriel Palmisano',
       lang: 'en',
       meta: {
-        'theme-color': '#F7F9FC',
+        'theme-color': '#F8F8FC',
         'author': 'Gabriel Palmisano',
       },
       head: [
@@ -36,8 +36,15 @@ Future<void> main() async {
         // Versioned by build, so a new deploy never shows a cached stylesheet
         // from the previous one next to the new markup.
         link(rel: 'stylesheet', href: 'styles.css?v=$buildStamp'),
-        link(rel: 'icon', href: 'favicon.png', type: 'image/png'),
+        // The globe g: a g whose bowl is a globe and whose tail runs to a
+        // dot, Bari. The SVG for browsers that take it, a PNG for the rest
+        // (96 px, as search results want a multiple of 48), a square for the
+        // iPhone, which rounds the corners itself, and Android's in the
+        // manifest.
+        link(rel: 'icon', href: 'icon.svg', type: 'image/svg+xml'),
+        link(rel: 'icon', href: 'favicon.png', type: 'image/png', attributes: {'sizes': '96x96'}),
         link(rel: 'apple-touch-icon', href: 'apple-touch-icon.png'),
+        link(rel: 'manifest', href: 'site.webmanifest'),
         // Flutter's loader. The map's engine starts from here, after the
         // page's own text is already on screen.
         script(src: 'flutter_bootstrap.js', async: true),

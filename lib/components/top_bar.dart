@@ -21,10 +21,33 @@ class TopBar extends StatelessComponent {
     (Section.contact, NavCopy.contact),
   ];
 
+  /// The site's icon, the globe g on its tile, ahead of the name. Drawn
+  /// inline so the stylesheet colours it from the palette; the name next to
+  /// it already says what the link is, so screen readers skip it.
+  static const _mark = svg(
+    viewBox: '0 0 64 64',
+    classes: 'brand-mark',
+    attributes: {'fill': 'none', 'stroke': '#fff', 'aria-hidden': 'true', 'focusable': 'false'},
+    [
+      rect(width: '64', height: '64', rx: '14', classes: 'brand-tile', []),
+      circle(cx: '31', cy: '24', r: '13', strokeWidth: '4.5', []),
+      ellipse(cx: '31', cy: '24', rx: '5.5', ry: '13', strokeWidth: '2.2', attributes: {'opacity': '.7'}, []),
+      path(d: 'M18 24h26', strokeWidth: '2.2', attributes: {'opacity': '.7'}, []),
+      path(
+        d: 'M44 13v26c0 8-5.5 12-12 12H20.4',
+        strokeWidth: '4.5',
+        attributes: {'stroke-linecap': 'round'},
+        [],
+      ),
+      // Bari, at the end of the tail.
+      circle(cx: '20.4', cy: '51', r: '3.6', strokeWidth: '2.1', classes: 'brand-dot', []),
+    ],
+  );
+
   @override
   Component build(BuildContext context) {
     return header(classes: 'topbar', [
-      a(href: '#${Section.hero.anchor}', classes: 'brand', [.text('Gabriel Palmisano')]),
+      a(href: '#${Section.hero.anchor}', classes: 'brand', [_mark, .text('Gabriel Palmisano')]),
       nav(classes: 'sections', [
         for (final (section, label) in _links)
           a(
