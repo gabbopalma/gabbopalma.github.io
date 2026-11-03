@@ -158,6 +158,9 @@ final talks = <Talk>[
         event: Txt.same('DevFest Venezia'),
         place: Places.mestre,
         audience: 80,
+        links: [
+          (Txt('Recording', 'Registrazione'), 'https://www.youtube.com/watch?v=PmE_ElbDYnI'),
+        ],
       ),
     ],
   ),
