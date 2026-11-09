@@ -20,6 +20,7 @@ import 'sections/talks_section.dart';
 import 'sections/work_section.dart';
 import 'slide_viewer.dart';
 import 'top_bar.dart';
+import 'video_viewer.dart';
 
 /// The whole page, in one language.
 ///
@@ -68,9 +69,13 @@ class SitePageState extends State<SitePage> {
   /// The browser's own zoom is in, from a pinch on a phone.
   bool _pinched = false;
 
-  /// The slides were opened from the page, with a history entry of their
-  /// own, so the back button closes them. A deck's own page opens with none:
-  /// there, back leaves.
+  /// The recording playing, and the stop it was filmed at.
+  (Talk, Stop)? _video;
+
+  /// The slides or the video were opened from the page, with a history
+  /// entry of their own, so the back button closes them. A deck's own page,
+  /// or an address that opens on a video, starts with none: there, back
+  /// leaves.
   bool _pushed = false;
 
   JSFunction? _onScroll;
@@ -106,10 +111,17 @@ class SitePageState extends State<SitePage> {
       );
     }
 
+    // "#video-<id>" in the address plays that recording, once the page is
+    // live: the server cannot see the part after the #.
+    if (VideoViewer.fromHash(web.window.location.hash) case final asked?) {
+      web.window.requestAnimationFrame(((JSNumber _) => _openVideo(asked.$1, asked.$2, push: false)).toJS);
+    }
+
     _onBack = ((web.Event _) {
-      if (_deck == null || !_pushed) return;
+      if (!_pushed) return;
       _pushed = false;
-      _closeDeck(fromHistory: true);
+      if (_deck != null) _closeDeck(fromHistory: true);
+      if (_video != null) _closeVideo(fromHistory: true);
     }).toJS;
     web.window.addEventListener('popstate', _onBack);
 
@@ -139,6 +151,10 @@ class SitePageState extends State<SitePage> {
     _onKey = ((web.KeyboardEvent event) {
       if (_deck != null) {
         _onViewerKey(event);
+        return;
+      }
+      if (_video != null) {
+        if (event.key == 'Escape') _closeVideo();
         return;
       }
       if (event.key != 'Escape') return;
@@ -249,16 +265,47 @@ class SitePageState extends State<SitePage> {
     }
   }
 
-  /// Closes the slides. Opened from the page, they take their history step
-  /// away with them, unless the back button already has. On a deck's own
-  /// page there is no step to go back to: the address becomes the site's,
-  /// at its talks, and the page scrolls there.
+  /// Closes the slides, and puts the reader back on their cover.
   void _closeDeck({bool fromHistory = false}) {
     final id = _deck?.deck?.id;
     setState(() {
       _deck = null;
       _zoomed = false;
     });
+    _leaveViewer('.deck-open[data-deck="$id"]', fromHistory: fromHistory);
+  }
+
+  /// Plays a recording over the page. [push] for a click on the page: the
+  /// video gets a step in the history, so the back button closes it.
+  void _openVideo(Talk talk, Stop stop, {bool push = true}) {
+    final recording = stop.recording;
+    if (recording == null) return;
+    setState(() => _video = (talk, stop));
+    _shutOut(true);
+    if (push) {
+      // On this page's own path: the site's <base> would put a bare hash on
+      // the English page.
+      web.window.history.pushState(null, '', '${_lang.path}${VideoViewer.hash(recording)}');
+      _pushed = true;
+    }
+    web.window.requestAnimationFrame(
+      ((JSNumber _) => (web.document.querySelector('.viewer') as web.HTMLElement?)?.focus()).toJS,
+    );
+  }
+
+  /// Stops the video, and puts the reader back on its frame.
+  void _closeVideo({bool fromHistory = false}) {
+    final id = _video?.$2.recording?.id;
+    setState(() => _video = null);
+    _leaveViewer('.deck-open[data-video="$id"]', fromHistory: fromHistory);
+  }
+
+  /// The page after a viewer closes. Opened from the page, the viewer takes
+  /// its history step away with it, unless the back button already has.
+  /// Opened from an address of its own there is no step to go back to: the
+  /// address becomes the site's, at its talks, and the page scrolls to the
+  /// [tile] that opens it. Either way the focus goes back to that tile.
+  void _leaveViewer(String tile, {required bool fromHistory}) {
     _shutOut(false);
     var landed = false;
     if (_pushed) {
@@ -268,11 +315,9 @@ class SitePageState extends State<SitePage> {
       web.window.history.replaceState(null, '', '${_lang.path}#${Section.talks.anchor}');
       landed = true;
     }
-    // Back to the cover of the deck.
-    if (id == null) return;
-    final cover = web.document.querySelector('.deck-open[data-deck="$id"]') as web.HTMLElement?;
-    if (landed) cover?.scrollIntoView(web.ScrollIntoViewOptions(block: 'center', behavior: 'instant'));
-    cover?.focus(web.FocusOptions(preventScroll: true));
+    final element = web.document.querySelector(tile) as web.HTMLElement?;
+    if (landed) element?.scrollIntoView(web.ScrollIntoViewOptions(block: 'center', behavior: 'instant'));
+    element?.focus(web.FocusOptions(preventScroll: true));
   }
 
   /// While the viewer is open, the page behind it neither scrolls nor takes
@@ -402,6 +447,7 @@ class SitePageState extends State<SitePage> {
           focused: _focused,
           onFocus: _focus,
           onOpenDeck: _openDeck,
+          onOpenVideo: _openVideo,
           pointedCities: _pointedIn(PlaceGroup.talk),
         ),
         WorkSection(lang: lang),
@@ -430,6 +476,8 @@ class SitePageState extends State<SitePage> {
             pinched: _pinched,
             fadeIn: _pushed,
           ),
+      if (_video case (final talk, final stop))
+        VideoViewer(talk: talk, stop: stop, lang: lang, onClose: _closeVideo, fadeIn: _pushed),
     ]);
   }
 }

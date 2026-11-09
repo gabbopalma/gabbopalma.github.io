@@ -10,6 +10,7 @@ class Stop {
     this.audience,
     this.note,
     this.links = const [],
+    this.recording,
     this.booth = false,
   });
 
@@ -24,10 +25,34 @@ class Stop {
   final Txt? note;
   final List<(Txt, String)> links;
 
+  /// The talk as filmed here, if it was.
+  final Recording? recording;
+
   /// A stand rather than a talk. Listed, never counted in the numbers.
   final bool booth;
 
   bool isPastAt(DateTime now) => !date.isAfter(now);
+}
+
+/// A talk filmed at one of its stops, on YouTube. The page shows a frame of
+/// it saved on the site, and loads YouTube only once the reader presses play.
+class Recording {
+  const Recording(this.id, {required this.minutes});
+
+  /// The YouTube video id, as in `watch?v=<id>`.
+  final String id;
+
+  /// How long it runs, rounded, for the line under its frame.
+  final int minutes;
+
+  String get watch => 'https://www.youtube.com/watch?v=$id';
+
+  /// YouTube's privacy-enhanced player, which sets no cookies before it
+  /// plays, started at once: the reader has just asked for it.
+  String get embed => 'https://www.youtube-nocookie.com/embed/$id?autoplay=1&rel=0';
+
+  /// The video's own thumbnail, saved under `web/videos/` at 640 x 360.
+  String get poster => 'videos/$id.webp';
 }
 
 /// A talk's slides: one image per slide, rendered from the PDF into
@@ -85,6 +110,9 @@ class Talk {
   final String language;
   final Txt summary;
   final List<Stop> stops;
+
+  /// The stops that were filmed, each shown next to the slides.
+  Iterable<Stop> get recorded => stops.where((stop) => stop.recording != null);
 }
 
 /// Source: the "Conferenze Palmisano" Google Sheet, speaker rows only.
@@ -107,6 +135,7 @@ final talks = <Talk>[
         event: Txt.same('flutterCon, next.app devCon'),
         place: Places.berlin,
         audience: 80,
+        recording: Recording('d66XmJCyiqU', minutes: 34),
       ),
     ],
   ),
@@ -158,9 +187,7 @@ final talks = <Talk>[
         event: Txt.same('DevFest Venezia'),
         place: Places.mestre,
         audience: 80,
-        links: [
-          (Txt('Recording', 'Registrazione'), 'https://www.youtube.com/watch?v=PmE_ElbDYnI'),
-        ],
+        recording: Recording('PmE_ElbDYnI', minutes: 37),
       ),
     ],
   ),
@@ -247,10 +274,9 @@ final talks = <Talk>[
         event: Txt('University of Urbino', "Università di Urbino"),
         place: Places.urbino,
         audience: 200,
-        links: [
-          (Txt('Recording', 'Registrazione'), 'https://www.youtube.com/watch?v=q4W2vbufdl0'),
-          (Txt('Event', 'Evento'), 'https://www.uniurb.it/novita-ed-eventi/6384'),
-        ],
+        links: [(Txt('Event', 'Evento'), 'https://www.uniurb.it/novita-ed-eventi/6384')],
+        // The whole afternoon, not only his part of it.
+        recording: Recording('q4W2vbufdl0', minutes: 104),
       ),
     ],
   ),
@@ -302,6 +328,13 @@ String formatDate(DateTime date, Lang lang) {
   const it = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
   final month = (lang == Lang.en ? en : it)[date.month - 1];
   return '${date.day} $month ${date.year}';
+}
+
+/// A running time as people say it: "37 min", "1 h 44 min".
+String formatMinutes(int minutes) {
+  if (minutes < 60) return '$minutes min';
+  final rest = minutes % 60;
+  return rest == 0 ? '${minutes ~/ 60} h' : '${minutes ~/ 60} h $rest min';
 }
 
 /// People in the room, rounded down to fifty with a plus, like the

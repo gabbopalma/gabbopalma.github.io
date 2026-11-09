@@ -15,12 +15,16 @@ class TalksSection extends StatelessComponent {
     required this.focused,
     required this.onFocus,
     required this.onOpenDeck,
+    required this.onOpenVideo,
     this.pointedCities = const {},
     super.key,
   });
 
   /// Opens a talk's slides in the viewer.
   final void Function(Talk talk) onOpenDeck;
+
+  /// Plays the recording of a talk made at one of its stops.
+  final void Function(Talk talk, Stop stop) onOpenVideo;
 
   /// [Place.name] of the dots the reader points at on the map: every stop in
   /// those cities lights up, the other way round from [onFocus].
@@ -76,14 +80,34 @@ class TalksSection extends StatelessComponent {
         ]),
       ]),
       p(classes: 'summary', [.text(talk.summary[lang])]),
-      if (talk.deck case final deck?) _deck(talk, deck),
+      if (talk.deck != null || talk.recorded.isNotEmpty)
+        div(classes: 'talk-media', [
+          if (talk.deck case final deck?) _deck(talk, deck),
+          for (final stop in talk.recorded) _video(talk, stop),
+        ]),
       ol(classes: 'stops', [for (final stop in talk.stops) _stop(stop)]),
     ]);
   }
 
+  /// A plain click opens [open] in place; a click with a modifier, or the
+  /// middle button, follows the link itself.
+  static Map<String, void Function(web.Event)> _inPlace(void Function() open) => {
+    'click': (event) {
+      final click = event as web.MouseEvent;
+      if (click.button != 0 || click.metaKey || click.ctrlKey || click.shiftKey || click.altKey) return;
+      click.preventDefault();
+      open();
+    },
+  };
+
+  static Component _thumb(String src) => img(
+    src: src,
+    alt: '',
+    attributes: {'width': '640', 'height': '360', 'loading': 'lazy', 'decoding': 'async'},
+  );
+
   /// The way into a talk's slides: its cover, small, and how many there are.
-  /// A link to the deck's own page, which a plain click opens in place; a
-  /// click with a modifier, or the middle button, gets the page itself.
+  /// A link to the deck's own page.
   Component _deck(Talk talk, Deck deck) => a(
     href: deck.path(lang),
     classes: 'deck-open',
@@ -92,26 +116,51 @@ class TalksSection extends StatelessComponent {
       'data-deck': deck.id,
       'data-count': 'slides/${deck.id}',
     },
-    events: {
-      'click': (event) {
-        final click = event as web.MouseEvent;
-        if (click.button != 0 || click.metaKey || click.ctrlKey || click.shiftKey || click.altKey) return;
-        click.preventDefault();
-        onOpenDeck(talk);
-      },
-    },
+    events: _inPlace(() => onOpenDeck(talk)),
     [
-      img(
-        src: deck.cover,
-        alt: '',
-        attributes: {'width': '640', 'height': '360', 'loading': 'lazy', 'decoding': 'async'},
-      ),
+      span(classes: 'deck-thumb', [_thumb(deck.cover)]),
       span(classes: 'deck-label', [
         span(classes: 'deck-title', [.text(TalksCopy.openSlides[lang])]),
         span(classes: 'deck-meta', [.text('${deck.pages} ${TalksCopy.slides[lang]} · PDF')]),
       ]),
     ],
   );
+
+  /// A triangle pointing right, a little heavier on its left like a play
+  /// button's.
+  static const _play = 'M8 5.5v13l10.5-6.5z';
+
+  /// The way into a recording, beside the slides: a frame of it with a play
+  /// mark, and how long it runs. A link to the video on YouTube; the event
+  /// it was filmed at is in the tooltip and on the player's bar.
+  Component _video(Talk talk, Stop stop) {
+    final recording = stop.recording!;
+    return a(
+      href: recording.watch,
+      target: .blank,
+      classes: 'deck-open',
+      attributes: {
+        'rel': 'noopener',
+        'aria-haspopup': 'dialog',
+        'title': stop.event[lang],
+        'data-video': recording.id,
+        'data-count': 'video/${recording.id}',
+      },
+      events: _inPlace(() => onOpenVideo(talk, stop)),
+      [
+        span(classes: 'deck-thumb', [
+          _thumb(recording.poster),
+          span(classes: 'deck-play', [
+            svg(viewBox: '0 0 24 24', attributes: {'aria-hidden': 'true'}, [path(d: _play, [])]),
+          ]),
+        ]),
+        span(classes: 'deck-label', [
+          span(classes: 'deck-title', [.text(TalksCopy.watch[lang])]),
+          span(classes: 'deck-meta', [.text('${formatMinutes(recording.minutes)} · YouTube')]),
+        ]),
+      ],
+    );
+  }
 
   /// A mouse, where pointing is free; on a phone pointing means tapping.
   static bool get _canHover => kIsWeb && web.window.matchMedia('(hover: hover)').matches;

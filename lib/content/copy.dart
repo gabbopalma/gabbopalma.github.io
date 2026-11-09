@@ -292,6 +292,10 @@ abstract final class TalksCopy {
 
   /// In the title of a deck's own page: "Chasing Behavioral Parity · Slides".
   static const slidesTitle = Txt('Slides', 'Slide');
+
+  // A talk's recording, and the player it opens in.
+  static const watch = Txt('Watch the video', 'Guarda il video');
+  static const onYouTube = Txt('Watch on YouTube', 'Guarda su YouTube');
 }
 
 class Job {
