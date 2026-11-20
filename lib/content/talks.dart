@@ -119,6 +119,26 @@ class Talk {
 /// Attendee rows (DevFest Bari 2025, Flutter & Friends 2026) are not talks.
 final talks = <Talk>[
   Talk(
+    title: "Sono umano, giuro: un agente AI alle prese con le difese anti-slop nell'Open Source",
+    short: Txt('Anti-slop defenses in open source', "Difese anti-slop nell'open source"),
+    language: 'IT',
+    summary: Txt(
+      "An AI agent tries, live, to get past an open source project's anti-slop "
+          'defenses: which ones stop it without shutting out people who '
+          'contribute in good faith, with or without AI.',
+      'Un agente AI prova dal vivo a superare le difese anti-slop di un '
+          'progetto open source: quali lo fermano senza chiudere la porta a chi '
+          'contribuisce in buona fede, con o senza AI.',
+    ),
+    stops: [
+      Stop(
+        date: _d(2026, 12, 12),
+        event: Txt.same('DevFest Bari'),
+        place: Places.bari,
+      ),
+    ],
+  ),
+  Talk(
     title: 'Chasing Behavioral Parity: Java, Swift and JS Interop in Flutter',
     short: Txt.same('Chasing Behavioral Parity'),
     language: 'EN',

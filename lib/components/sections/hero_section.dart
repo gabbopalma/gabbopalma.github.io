@@ -16,6 +16,13 @@ class HeroSection extends StatelessComponent {
   /// The first talk that has not happened yet: the "Now" of the page.
   final (Talk, Stop)? next;
 
+  /// The event and its city, once: "DevFest Bari", not "DevFest Bari, Bari".
+  String _where(Stop stop) {
+    final event = stop.event[lang];
+    final city = stop.place.label(lang);
+    return event.contains(city) ? event : '$event, $city';
+  }
+
   static const _quick = [
     (BrandIcon.github, 'GitHub', Links.github),
     (BrandIcon.linkedin, 'LinkedIn', Links.linkedin),
@@ -38,9 +45,7 @@ class HeroSection extends StatelessComponent {
           div([
             dt([.text(HeroCopy.nextLabel[lang])]),
             dd([
-              a(href: '#${Section.talks.anchor}', [
-                .text('${stop.event[lang]}, ${stop.place.label(lang)}'),
-              ]),
+              a(href: '#${Section.talks.anchor}', [.text(_where(stop))]),
               span(classes: 'date', [.text(formatDate(stop.date, lang))]),
             ]),
           ]),
