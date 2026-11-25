@@ -1,9 +1,11 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
+import 'package:universal_web/web.dart' as web;
 
 import '../content/copy.dart';
 import '../content/lang.dart';
 import '../content/scene.dart';
+import 'reading_place.dart';
 
 class TopBar extends StatelessComponent {
   const TopBar({required this.lang, required this.current, super.key});
@@ -57,10 +59,20 @@ class TopBar extends StatelessComponent {
             [.text(label[lang])],
           ),
       ]),
+      // To the same section of the other page, and with a script, to the
+      // same paragraph of it: see [ReadingPlace].
       a(
-        href: lang.other.path,
+        href: current == Section.hero ? lang.other.path : '${lang.other.path}#${current.anchor}',
         classes: 'lang',
         attributes: {'hreflang': lang.other.code, 'lang': lang.other.code, 'title': NavCopy.switchTo[lang]},
+        events: {
+          'click': (event) {
+            // A new tab keeps its own place; this one stays where it is.
+            final click = event as web.MouseEvent;
+            if (click.metaKey || click.ctrlKey || click.shiftKey || click.altKey) return;
+            ReadingPlace.keep(current.anchor);
+          },
+        },
         [
           span(classes: lang == Lang.en ? 'on' : null, [.text('EN')]),
           span(classes: 'sep', [.text('/')]),

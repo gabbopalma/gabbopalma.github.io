@@ -12,6 +12,7 @@ import '../content/places.dart';
 import '../content/scene.dart';
 import '../content/talks.dart';
 import 'map_pane.dart';
+import 'reading_place.dart';
 import 'sections/about_section.dart';
 import 'sections/contact_section.dart';
 import 'sections/hero_section.dart';
@@ -96,6 +97,9 @@ class SitePageState extends State<SitePage> {
     if (component.deck case final id?) _deck = talks.where((talk) => talk.deck?.id == id).firstOrNull;
 
     if (!kIsWeb) return;
+
+    // Arrived from the other language: back to the paragraph the reader was on.
+    ReadingPlace.restore();
 
     if (_deck != null) {
       // "#7" in the address is the seventh slide.
