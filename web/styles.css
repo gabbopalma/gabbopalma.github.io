@@ -1110,12 +1110,24 @@ p {
   font-size: 16px;
 }
 
-/* A talk's slides and its recording, side by side where they fit. */
+/* A talk's slides and its recording: side by side on a desktop, where a
+   long title goes to two lines rather than pushing the recording below;
+   one under the other on a phone. */
 .talk-media {
   display: flex;
-  flex-wrap: wrap;
   gap: 14px 32px;
   margin: 0 0 1em;
+}
+
+.talk-media .deck-open {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .talk-media {
+    flex-wrap: wrap;
+  }
 }
 
 /* Either one: a small frame as the way in, and what it holds. */
