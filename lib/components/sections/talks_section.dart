@@ -118,7 +118,7 @@ class TalksSection extends StatelessComponent {
     },
     events: _inPlace(() => onOpenDeck(talk)),
     [
-      span(classes: 'deck-thumb', [_thumb(deck.cover)]),
+      span(classes: 'deck-thumb', [_thumb(deck.cover(lang))]),
       span(classes: 'deck-label', [
         span(classes: 'deck-title', [.text(TalksCopy.openSlides[lang])]),
         span(classes: 'deck-meta', [.text('${deck.pages} ${TalksCopy.slides[lang]} · PDF')]),

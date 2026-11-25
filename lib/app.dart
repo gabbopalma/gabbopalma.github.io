@@ -75,7 +75,7 @@ class App extends StatelessComponent {
           _property('og:url', url),
           _property('og:title', title),
           _property('og:description', description),
-          _property('og:image', deck == null ? '${Links.site}/images/og.png' : '${Links.site}/${deck.share}'),
+          _property('og:image', deck == null ? '${Links.site}/images/og.png' : '${Links.site}/${deck.share(lang)}'),
           _property('og:locale', lang == Lang.en ? 'en_US' : 'it_IT'),
           meta(name: 'twitter:card', content: 'summary_large_image'),
           script(attributes: {'type': 'application/ld+json'}, content: _structuredData(lang)),

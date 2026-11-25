@@ -167,10 +167,10 @@ class SlideViewer extends StatelessComponent {
           ),
           _LinkButton(talk: talk, deck: deck, lang: lang, page: page),
           a(
-            href: deck.pdf,
+            href: deck.pdf(lang),
             classes: 'viewer-pdf',
             attributes: {
-              'download': '${deck.id}.pdf',
+              'download': deck.pdfName(lang),
               'title': TalksCopy.download[lang],
               'data-count': 'slides-pdf/${deck.id}',
             },
@@ -230,12 +230,12 @@ class SlideViewer extends StatelessComponent {
             for (var i = 0; i < deck.pages; i++)
               div(classes: zoomed && i == page ? 'viewer-slide zoomed' : 'viewer-slide', events: zoomed && i == page ? _panning : null, [
                 img(
-                  src: deck.slide(i),
+                  src: deck.slide(i, lang),
                   alt: '${TalksCopy.slide[lang]} ${i + 1} ${TalksCopy.of[lang]} ${deck.pages}',
                   attributes: {
                     // The browser takes the smallest that is sharp at the
                     // width the stylesheet gives the slide.
-                    'srcset': '${deck.slide(i)} 1920w, ${deck.sharpSlide(i)} 3840w',
+                    'srcset': '${deck.slide(i, lang)} 1920w, ${deck.sharpSlide(i, lang)} 3840w',
                     // Zoomed, the slide is twice as wide: the largest there is.
                     'sizes': zoomed && i == page
                         ? '3840px'

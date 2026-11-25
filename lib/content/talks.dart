@@ -58,18 +58,30 @@ class Recording {
 /// A talk's slides: one image per slide, rendered from the PDF into
 /// `web/slides/<id>/`, and the PDF itself for whoever wants to keep it.
 class Deck {
-  const Deck(this.id, this.pages);
+  const Deck(this.id, this.pages, {this.italian = false});
 
   /// The folder under `web/slides`, and the deck's name in the visit counts.
   final String id;
   final int pages;
 
-  String get cover => 'slides/$id/cover.webp';
-  String get pdf => 'slides/$id/slides.pdf';
+  /// The slides exist in Italian too, page for page, in the `it/` folder
+  /// inside the deck's own: the Italian page shows those.
+  final bool italian;
+
+  bool _inItalian(Lang lang) => italian && lang == Lang.it;
+
+  /// Where the slides in [lang] are: the deck's folder, or its Italian one.
+  String _folder(Lang lang) => _inItalian(lang) ? 'slides/$id/it' : 'slides/$id';
+
+  String cover(Lang lang) => '${_folder(lang)}/cover.webp';
+  String pdf(Lang lang) => '${_folder(lang)}/slides.pdf';
+
+  /// The name the PDF is saved under.
+  String pdfName(Lang lang) => _inItalian(lang) ? '$id-it.pdf' : '$id.pdf';
 
   /// The first slide as a JPEG for link previews: the social sites that
   /// draw one do not all read WebP.
-  String get share => 'slides/$id/share.jpg';
+  String share(Lang lang) => '${_folder(lang)}/share.jpg';
 
   /// The deck's own page, which opens on its slides: `/slides/<id>/`, or
   /// under `/it/` in Italian.
@@ -77,11 +89,11 @@ class Deck {
 
   /// The slide at [index], from 0: 1920 pixels wide, enough for a phone or
   /// a plain screen.
-  String slide(int index) => 'slides/$id/${_number(index)}.webp';
+  String slide(int index, Lang lang) => '${_folder(lang)}/${_number(index)}.webp';
 
   /// The same slide at 3840, for a large sharp screen: a slide shown 1500
   /// points wide on a Retina display needs 3000 pixels, and blurs on less.
-  String sharpSlide(int index) => 'slides/$id/${_number(index)}@2x.webp';
+  String sharpSlide(int index, Lang lang) => '${_folder(lang)}/${_number(index)}@2x.webp';
 
   String _number(int index) => (index + 1).toString().padLeft(2, '0');
 }
@@ -169,8 +181,9 @@ final talks = <Talk>[
       "AI agent che usano un'app Flutter al posto tuo tramite il Dart VM "
           'Service, e come affiancarli a una CI deterministica.',
     ),
-    // The English edition of the deck, the one shared on Drive.
-    deck: Deck('agentic-testing', 20),
+    // Given in Italian, so the Italian page shows the Italian slides. The
+    // English edition is the one shared on Drive, and the English page's.
+    deck: Deck('agentic-testing', 20, italian: true),
     stops: [
       Stop(
         date: _d(2026, 4, 9),
